@@ -19,7 +19,11 @@ Build script.
 
 import os.path
 
+from pip.req import parse_requirements
 from setuptools import setup, find_packages
+
+install_reqs = parse_requirements('requirements.txt')
+reqs = [str(ir.req) for ir in install_reqs]
 
 
 setup(
@@ -33,9 +37,7 @@ setup(
         'reworker': os.path.join('src', 'reworker')
     },
     packages=find_packages('src'),
-    install_requires=[
-        'flask>=0.10',
-    ],
+    install_requires=reqs,
     classifiers=[
         ('License :: OSI Approved :: GNU Affero General Public '
          'License v3 or later (AGPLv3+)'),
