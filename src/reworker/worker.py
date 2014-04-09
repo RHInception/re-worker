@@ -33,12 +33,12 @@ class Worker(object):
         queue is the name of the queue to use
         logger is optional.
         """
-        # NOTE: self.logger is the application level logger. This should not
+        # NOTE: self.app_logger is the application level logger. This should not
         #       be used for user notification!
-        self.logger = logger
-        if not self.logger:
+        self.app_logger = logger
+        if not self.app_logger:
             # TODO: Make a sane default logger.
-            self.logger = logging.getLogger(self.__class__.__name__)
+            self.app_logger = logging.getLogger(self.__class__.__name__)
 
         self._queue = queue
         self._consumer_tag = None
@@ -52,7 +52,7 @@ class Worker(object):
             mq_config['vhost'],
             creds
         )
-        self.logger.info(
+        self.app_logger.info(
             'Attemtping connection with amqp://%s:***@%s:%s%s' % (
                 mq_config['user'], mq_config['server'],
                 mq_config['port'], mq_config['vhost']))
@@ -65,19 +65,19 @@ class Worker(object):
         """
         Call back when a connection is opened.
         """
-        #self.logger.debug('Attemtping to open channel...')
+        self.app_logger.debug('Attemtping to open channel...')
         self._connection.channel(self._on_channel_open)
 
     def _on_channel_open(self, channel):
         """
         Call back when a channel is opened.
         """
-        #self.logger.info('Connection and channel open.')
+        self.app_logger.info('Connection and channel open.')
         self._channel = channel
-        #self.logger.debug('Attempting to start consuming...')
+        self.app_logger.debug('Attempting to start consuming...')
         self._consumer_tag = self._channel.basic_consume(
             self._process, queue=self._queue)
-        #self.logger.info('Consuming on queue %s' % self._queue)
+        self.app_logger.info('Consuming on queue %s' % self._queue)
 
     def _process(self, channel, basic_deliver, properties, body):
         """
@@ -102,15 +102,15 @@ class Worker(object):
         Run forever ... or until someone makes it stop.
         """
         try:
-            self.logger.debug('Starting the IOLoop.')
+            self.app_logger.debug('Starting the IOLoop.')
             self._connection.ioloop.start()
         except KeyboardInterrupt:
-            self.logger.info('KeyboardInterrupt sent.')
+            self.app_logger.info('KeyboardInterrupt sent.')
         except Exception, ex:
-            self.logger.error('Error %s: %s' % (str(ex), ex))
+            self.app_logger.error('Error %s: %s' % (str(ex), ex))
 
-        self.logger.debug('Stopping the IOloop.')
+        self.app_logger.debug('Stopping the IOloop.')
         self._connection.ioloop.stop()
-        self.logger.debug('Closing the connection.')
+        self.app_logger.debug('Closing the connection.')
         self._connection.close()
-        self.logger.info('Exiting...')
+        self.app_logger.info('Exiting...')
