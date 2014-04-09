@@ -50,7 +50,7 @@ class Worker(object):
             mq_config['server'],
             mq_config['port'],
             mq_config['vhost'],
-            mq_config['creds'],
+            creds
         )
         self.logger.info(
             'Attemtping connection with amqp://%s:***@%s:%s%s' % (
