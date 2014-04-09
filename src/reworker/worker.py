@@ -18,6 +18,7 @@ The worker class.
 
 import json
 import logging
+import os.path
 
 import pika
 
@@ -27,12 +28,13 @@ class Worker(object):
     Parent class for workers.
     """
 
-    def __init__(self, mq_config, queue, logger=None):
+    def __init__(self, mq_config, queue, output_dir='.', logger=None):
         """
         Creates an instance of a Worker.
 
         mq_config should house: user, password, server, port and vhost.
         queue is the name of the queue to use
+        output_dir is the directory for process logs to be written to
         logger is optional.
         """
         # NOTE: self.app_logger is the application level logger.
@@ -41,6 +43,8 @@ class Worker(object):
         if not self.app_logger:
             # TODO: Make a sane default logger.
             self.app_logger = logging.getLogger(self.__class__.__name__)
+
+        self._output_dir = os.path.realpath(output_dir)
 
         self._queue = queue
         self._consumer_tag = None
@@ -97,7 +101,8 @@ class Worker(object):
             corr_id = '123'
             output = logging.getLogger(corr_id)
             output.setLevel(logging.DEBUG)
-            handler = logging.FileHandler(corr_id + ".log")
+            handler = logging.FileHandler(os.path.sep.join([
+                self._output_dir, corr_id + ".log"]))
             handler.setLevel(logging.DEBUG)
             output.addHandler(handler)
             self.process(channel, basic_deliver, properties, body, output)

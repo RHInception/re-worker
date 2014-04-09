@@ -13,7 +13,8 @@ class IPrintStuff(Worker):
         output.info(str(body))  # output is the logger for process output
         self.ack(basic_deliver) # ack at the end
 
+
 mq_conf = {....}
-worker = IPrintStuff(mq_conf, 'myqueue')
+worker = IPrintStuff(mq_conf, 'myqueue', '/tmp/logs/')
 worker.run_forever()
 ```
