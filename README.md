@@ -60,4 +60,4 @@ worker = IPrintStuff(mq_conf, 'myqueue', '/tmp/logs/')
 worker.run_forever()
 ```
 
-For a more in-depth example see the examples/ folder.
+For a more in-depth example see the [examples/](https://github.com/RHInception/re-worker/tree/master/examples) folder.
