@@ -97,8 +97,7 @@ class Worker(object):
         """
         try:
             body = json.loads(body)
-            #corr_id = str(properties.correlation_id)
-            corr_id = '123'
+            corr_id = str(properties.correlation_id)
             output = logging.getLogger(corr_id)
             output.setLevel(logging.DEBUG)
             handler = logging.FileHandler(os.path.sep.join([
@@ -106,13 +105,13 @@ class Worker(object):
             handler.setLevel(logging.DEBUG)
             output.addHandler(handler)
             self.process(channel, basic_deliver, properties, body, output)
+        except NotImplementedError, nie:
+            raise nie
         except Exception, ex:
-            #self.app_logger.error('Could not parse msg. Rejecting. %s: %s' % (
-            #    type(ex), ex))
-            print ex
-            raise ex
-            #self._channel.basic_reject(
-            #    basic_deliver.delivery_tag, requeue=False)
+            self.app_logger.error('Could not parse msg. Rejecting. %s: %s' % (
+                type(ex), ex))
+            self._channel.basic_reject(
+                basic_deliver.delivery_tag, requeue=False)
 
     def process(self, channel, basic_deliver, properties, body, output):
         """
