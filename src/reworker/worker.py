@@ -91,6 +91,22 @@ class Worker(object):
         """
         self._channel.basic_ack(basic_deliver.delivery_tag)
 
+    def send(self, topic, message):
+        """
+        Shortcut for sending messages back.
+
+        topic is the topic the message will be sent to
+        message is a dictionary or list which will become json and sent
+        """
+        props = pika.spec.BasicProperties()
+        props.app_id = str(self.__class__.__name__)
+
+        self._channel.basic_publish(
+            exchange='re',
+            routing_key=topic,
+            body=json.dumps(message),
+            properties=props)
+
     def _process(self, channel, basic_deliver, properties, body):
         """
         Internal processing that happens before subclass starts processing.
