@@ -16,7 +16,9 @@
 The worker class.
 """
 
+import json
 import logging
+
 import pika
 
 
@@ -33,8 +35,8 @@ class Worker(object):
         queue is the name of the queue to use
         logger is optional.
         """
-        # NOTE: self.app_logger is the application level logger. This should not
-        #       be used for user notification!
+        # NOTE: self.app_logger is the application level logger.
+        #       This should not be used for user notification!
         self.app_logger = logger
         if not self.app_logger:
             # TODO: Make a sane default logger.
@@ -79,21 +81,39 @@ class Worker(object):
             self._process, queue=self._queue)
         self.app_logger.info('Consuming on queue %s' % self._queue)
 
-    def _process(self, channel, basic_deliver, properties, body):
-        """
-        Internal processing that happens before subclass starts processing.
-        """
-        self.process(channel, basic_deliver, properties, body)
-
     def ack(self, basic_deliver):
         """
         Shortcut for acking
         """
         self._channel.basic_ack(basic_deliver.delivery_tag)
 
-    def process(self, channel, basic_deliver, properties, body):
+    def _process(self, channel, basic_deliver, properties, body):
+        """
+        Internal processing that happens before subclass starts processing.
+        """
+        try:
+            body = json.loads(body)
+            #corr_id = str(properties.correlation_id)
+            corr_id = '123'
+            output = logging.getLogger(corr_id)
+            output.setLevel(logging.DEBUG)
+            handler = logging.FileHandler(corr_id + ".log")
+            handler.setLevel(logging.DEBUG)
+            output.addHandler(handler)
+            self.process(channel, basic_deliver, properties, body, output)
+        except Exception, ex:
+            #self.app_logger.error('Could not parse msg. Rejecting. %s: %s' % (
+            #    type(ex), ex))
+            print ex
+            raise ex
+            #self._channel.basic_reject(
+            #    basic_deliver.delivery_tag, requeue=False)
+
+    def process(self, channel, basic_deliver, properties, body, output):
         """
         Subclass must override this to implement their logic.
+
+        **Note**: Body is already loaded json.
         """
         raise NotImplementedError('process must be implemented.')
 
