@@ -18,3 +18,5 @@ mq_conf = {....}
 worker = IPrintStuff(mq_conf, 'myqueue', '/tmp/logs/')
 worker.run_forever()
 ```
+
+For a more in-depth example see the examples/ folder.
