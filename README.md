@@ -1,5 +1,8 @@
 # RE-WORKER
-Worker parent code for release engine workers.
+Worker parent code for for our new [release engine hotness](https://github.com/RHInception/?query=re-).
+
+[![Build Status](https://api.travis-ci.org/RHInception/re-worker.png)](https://travis-ci.org/RHInception/re-worker/)
+
 
 # Rough Example
 ```python
