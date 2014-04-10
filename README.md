@@ -15,6 +15,7 @@ Sends a message.
 
 * **Inputs**:
  * topic: the routing key
+ * corr\_id: the correlation id
  * body: the dict or list to send as the body
 * **Returns**: None
 

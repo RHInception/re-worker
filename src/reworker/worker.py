@@ -91,7 +91,7 @@ class Worker(object):
         """
         self._channel.basic_ack(basic_deliver.delivery_tag)
 
-    def send(self, topic, message):
+    def send(self, topic, corr_id, message):
         """
         Shortcut for sending messages back.
 
@@ -100,6 +100,7 @@ class Worker(object):
         """
         props = pika.spec.BasicProperties()
         props.app_id = str(self.__class__.__name__)
+        props.correlation_id = str(corr_id)
 
         self._channel.basic_publish(
             exchange='re',

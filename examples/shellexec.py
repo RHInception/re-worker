@@ -36,9 +36,9 @@ class ShellExec(Worker):
         """
         # Ack the original message
         self.ack(basic_deliver)
-
+        corr_id = str(properties.correlation_id)
         # Notify we are starting
-        self.send('release.step', {'status': 'started'})
+        self.send('release.step', corr_id, {'status': 'started'})
         output.debug('Starting shellexec')
         
         # Start the ls
@@ -59,9 +59,9 @@ class ShellExec(Worker):
 
         # Notify the final state based on the return code
         if process.returncode == 0:
-            self.send('release.step', {'status': 'completed'})
+            self.send('release.step', corr_id, {'status': 'completed'})
         else:
-            self.send('release.step', {'status': 'failed'})
+            self.send('release.step', corr_id, {'status': 'failed'})
 
         print "Handled a message"
 
