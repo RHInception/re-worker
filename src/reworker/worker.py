@@ -21,6 +21,7 @@ import logging
 import os.path
 
 import pika
+import pika.exceptions
 
 
 class Worker(object):
@@ -124,6 +125,7 @@ class Worker(object):
         try:
             body = json.loads(body)
             corr_id = str(properties.correlation_id)
+            # Create an output logger for sending results
             output = logging.getLogger(corr_id)
             output.setLevel(logging.DEBUG)
             handler = logging.FileHandler(os.path.sep.join([
@@ -132,14 +134,13 @@ class Worker(object):
             handler.setFormatter(formatter)
             handler.setLevel(logging.DEBUG)
             output.addHandler(handler)
+            # Execute
             output.debug('Starting %s.%s' % (self.__class__.__name__, corr_id))
             self.process(channel, basic_deliver, properties, body, output)
             output.debug('Finished %s.%s' % (self.__class__.__name__, corr_id))
-        except NotImplementedError, nie:
-            raise nie
-        except Exception, ex:
+        except ValueError, vex:
             self.app_logger.error('Could not parse msg. Rejecting. %s: %s' % (
-                type(ex), ex))
+                type(vex), vex))
             self._channel.basic_reject(
                 basic_deliver.delivery_tag, requeue=False)
 
@@ -158,13 +159,20 @@ class Worker(object):
         try:
             self.app_logger.debug('Starting the IOLoop.')
             self._connection.ioloop.start()
+        except AttributeError, aex:
+            self.app_logger.fatal(
+                'Can not recover from AttributeError raised during '
+                'run_forver: %s' % aex)
         except KeyboardInterrupt:
             self.app_logger.info('KeyboardInterrupt sent.')
-        except Exception, ex:
-            self.app_logger.error('Error %s: %s' % (str(ex), ex))
+        except pika.exceptions.IncompatibleProtocolError, ipex:
+            self.app_logger.fatal('No connection or incompatible protocol.')
 
         self.app_logger.debug('Stopping the IOloop.')
         self._connection.ioloop.stop()
         self.app_logger.debug('Closing the connection.')
-        self._connection.close()
+        try:
+            self._connection.close()
+        except AttributeError, aex:
+            self.app_logger.debug('Connection could not be closed: %s' % aex)
         self.app_logger.info('Exiting...')
