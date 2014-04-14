@@ -39,7 +39,6 @@ class ShellExec(Worker):
         corr_id = str(properties.correlation_id)
         # Notify we are starting
         self.send('release.step', corr_id, {'status': 'started'})
-        output.debug('Starting shellexec')
         
         # Start the ls
         command = ['/bin/ls', '-la']

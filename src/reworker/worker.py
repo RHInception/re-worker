@@ -128,9 +128,13 @@ class Worker(object):
             output.setLevel(logging.DEBUG)
             handler = logging.FileHandler(os.path.sep.join([
                 self._output_dir, corr_id + ".log"]))
+            formatter = logging.Formatter('%(message)s')
+            handler.setFormatter(formatter)
             handler.setLevel(logging.DEBUG)
             output.addHandler(handler)
+            output.debug('Starting %s.%s' % (self.__class__.__name__, corr_id))
             self.process(channel, basic_deliver, properties, body, output)
+            output.debug('Finished %s.%s' % (self.__class__.__name__, corr_id))
         except NotImplementedError, nie:
             raise nie
         except Exception, ex:
