@@ -6,6 +6,6 @@ install:
     - "pip install pep8 nose coverage mock"
 script:
     - "pep8 src/"
-    - "nosetests -v --with-cover --cover-min-percentage=70 --cover-package=reworker test/"
+    - "nosetests -v --with-cover --cover-min-percentage=80 --cover-package=reworker test/"
 notifications:
     email: false
