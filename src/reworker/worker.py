@@ -35,14 +35,23 @@ class Worker(object):
         mq_config should house: user, password, server, port and vhost.
         queue is the name of the queue to use
         output_dir is the directory for process logs to be written to
-        logger is optional.
+        logger is an optional logger. Defaults to a logger to stderr
         """
         # NOTE: self.app_logger is the application level logger.
         #       This should not be used for user notification!
         self.app_logger = logger
         if not self.app_logger:
-            # TODO: Make a sane default logger.
             self.app_logger = logging.getLogger(self.__class__.__name__)
+            self.app_logger.setLevel(logging.INFO)
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            handler.setLevel(logging.INFO)
+            self.app_logger.addHandler(handler)
+            self.app_logger.warn(
+                'No app logger passed in. '
+                'Defaulting to Streamandler with level INFO.')
 
         self._output_dir = os.path.realpath(output_dir)
 

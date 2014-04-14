@@ -45,6 +45,19 @@ should be written to the output logger.
 * **Returns**: None
 
 
+## Running
+
+To run an instance you will need to make an instance of your worker by passing in a few items.
+
+* **Inputs**:
+  * mq\_config: should house: user, password, server, port and vhost.
+  * queue: is the name of the queue to use
+  * output\_dir: is the directory for process logs to be written to
+  * logger: is an optional logger. Defaults to a logger to stderr
+
+
+## Example
+
 ```python
 from reworker.worker import Worker
 
@@ -56,7 +69,14 @@ class IPrintStuff(Worker):
         self.ack(basic_deliver) # ack at the end
 
 
-mq_conf = {....}
+mq_conf = {
+    'server': '127.0.0.1',
+    'port': 5672,
+    'vhost': '/',
+    'user': 'guest',
+    'password': 'guest',
+}
+
 worker = IPrintStuff(mq_conf, 'myqueue', '/tmp/logs/')
 worker.run_forever()
 ```
