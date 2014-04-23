@@ -16,7 +16,17 @@ Sends a message.
 * **Inputs**:
  * topic: the routing key
  * corr\_id: the correlation id
- * body: the dict or list to send as the body
+ * message\_struct: the dict or list to send as the body
+* **Returns**: None
+
+### Worker.notify
+
+* **Inputs**:
+ * slug: the short text to use in the notification
+ * message: a string which will be used in the notification
+ * phase: the phase to identify with in the notification
+ * corr\_id: the correlation id. Default: None
+ * exchange: the exchange to publish on. Default: re
 * **Returns**: None
 
 ### Worker.ack
