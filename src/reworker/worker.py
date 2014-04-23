@@ -101,21 +101,43 @@ class Worker(object):
         """
         self._channel.basic_ack(basic_deliver.delivery_tag)
 
-    def send(self, topic, corr_id, message):
+    def notify(self, slug, message, phase, corr_id=None, exchange='re'):
+        """
+        Shortcut for sending a notification.
+
+        slug is the short text to use in the notification
+        message is a string which will be used in the notification
+        phase is the phase to identify with in the notification
+        corr_id is the correlation id. Default: None
+        exchange is the exchange to publish on. Default: re
+        """
+        self.send(
+            'notification',
+            corr_id,
+            {
+                'slug': str(slug)[:80],
+                'message': message,
+                'phase': phase,
+            }
+        )
+
+    def send(self, topic, corr_id, message_struct, exchange='re'):
         """
         Shortcut for sending messages back.
 
         topic is the topic the message will be sent to
-        message is a dictionary or list which will become json and sent
+        corr_id is the correlation id
+        message_struct is a dictionary or list which will become json and sent
+        exchange is the exchange to publish on. Default: re
         """
         props = pika.spec.BasicProperties()
         props.app_id = str(self.__class__.__name__)
         props.correlation_id = str(corr_id)
 
         self._channel.basic_publish(
-            exchange='re',
+            exchange=exchange,
             routing_key=topic,
-            body=json.dumps(message),
+            body=json.dumps(message_struct),
             properties=props)
 
     def _process(self, channel, basic_deliver, properties, body):

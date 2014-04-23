@@ -16,6 +16,7 @@
 Unittests.
 """
 
+import json
 import logging
 import mock
 import pika
@@ -137,3 +138,54 @@ class TestWorker(TestCase):
         # with the proper calls
         assert w._connection.ioloop.stop.called == 1
         assert w._connection.close.called == 1
+
+    def test_send(self):
+        """
+        Make sure that send executes the proper lower level calls.
+        """
+        w = DummyWorker(MQ_CONF, 'dummyqueue', '/tmp/logs/')
+        w._on_open(mock.MagicMock('connection'))
+        w._on_channel_open(mock.MagicMock(pika.channel.Channel))
+
+        topic = 'topic'
+        corr_id = '12345'
+        exchange = 're'
+        message = {'test': 'item'}
+
+        w.send(topic, corr_id, message, exchange)
+        assert w._channel.basic_publish.call_count == 1
+        kwargs = w._channel.basic_publish.call_args[1]
+        assert kwargs['exchange'] == exchange
+        assert kwargs['routing_key'] == topic
+        assert kwargs['body'] == json.dumps(message)
+
+        assert kwargs['properties'].app_id == "DummyWorker"
+        assert kwargs['properties'].correlation_id == corr_id
+
+    def test_notify(self):
+        """
+        Make sure that send executes the proper lower level calls.
+        """
+        w = DummyWorker(MQ_CONF, 'dummyqueue', '/tmp/logs/')
+        w._on_open(mock.MagicMock('connection'))
+        w._on_channel_open(mock.MagicMock(pika.channel.Channel))
+
+        slug = 'slug'
+        message = 'message'
+        phase = 'create'
+
+        topic = 'topic'
+        corr_id = '12345'
+        exchange = 're'
+        message = {'test': 'item'}
+
+        w.notify(slug, message, phase, corr_id, exchange)
+        assert w._channel.basic_publish.call_count == 1
+        kwargs = w._channel.basic_publish.call_args[1]
+        assert kwargs['exchange'] == exchange
+        assert kwargs['routing_key'] == 'notification'
+        assert kwargs['body'] == json.dumps({
+            'slug': slug, 'message': message, 'phase': phase})
+
+        assert kwargs['properties'].app_id == "DummyWorker"
+        assert kwargs['properties'].correlation_id == corr_id
