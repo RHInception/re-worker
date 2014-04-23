@@ -39,7 +39,7 @@ class ShellExec(Worker):
         corr_id = str(properties.correlation_id)
         # Notify we are starting
         self.send('release.step', corr_id, {'status': 'started'})
-        
+
         # Start the ls
         command = ['/bin/ls', '-la']
         output.info('Command: %s' % " ".join(command))
@@ -59,8 +59,23 @@ class ShellExec(Worker):
         # Notify the final state based on the return code
         if process.returncode == 0:
             self.send('release.step', corr_id, {'status': 'completed'})
+            # Notify on result. Not required but nice to do.
+            self.notify(
+                'ShellExec Executed Successfully',
+                'ShellExec successfully executed %s. See logs.' % " ".join(
+                    command),
+                'completed',
+                corr_id)
+
         else:
             self.send('release.step', corr_id, {'status': 'failed'})
+            # Notify on result. Not required but nice to do.
+            self.notify(
+                'ShellExec Failed',
+                'ShellExec failed trying to execute %s. See logs.' % " ".join(
+                    command),
+                'failed',
+                corr_id)
 
         print "Handled a message"
 
