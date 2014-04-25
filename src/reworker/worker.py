@@ -151,6 +151,7 @@ class Worker(object):
         """
         Internal processing that happens before subclass starts processing.
         """
+        class_name = self.__class__.__name__
         try:
             body = json.loads(body)
             corr_id = str(properties.correlation_id)
@@ -164,14 +165,33 @@ class Worker(object):
             handler.setLevel(logging.DEBUG)
             output.addHandler(handler)
             # Execute
-            output.debug('Starting %s.%s' % (self.__class__.__name__, corr_id))
-            self.process(channel, basic_deliver, properties, body, output)
+            output.debug('Starting %s.%s' % (class_name, corr_id))
+            try:
+                self.process(channel, basic_deliver, properties, body, output)
+            except KeyError, ke:
+                output.debug(
+                    'An expected key in the message for %s for %s was '
+                    'missing: %s' % (corr_id, class_name, ke))
+                self.send('release.step', corr_id, {'status': 'failed'})
+                # Notify on result. Not required but nice to do.
+                self.notify(
+                    '%s Failed' % class_name,
+                    '%s failed due to missing key: %s.' % (
+                        class_name, ke),
+                    'failed',
+                    corr_id)
             output.debug('Finished %s.%s' % (self.__class__.__name__, corr_id))
         except ValueError, vex:
             self.app_logger.error('Could not parse msg. Rejecting. %s: %s' % (
                 type(vex), vex))
-            self._channel.basic_reject(
-                basic_deliver.delivery_tag, requeue=False)
+            self.send('release.step', corr_id, {'status': 'failed'})
+            # Notify on result. Not required but nice to do.
+            self.notify(
+                '%s Failed' % class_name,
+                '%s failed trying to parse message' % class_name,
+                'failed',
+                corr_id)
+            self.reject(basic_deliver, False)
 
     def process(self, channel, basic_deliver, properties, body, output):
         """

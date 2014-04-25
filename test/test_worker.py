@@ -65,6 +65,17 @@ class DummyWorker(worker.Worker):
         self.ack(basic_deliver)
 
 
+class DynamicDummyWorker(worker.Worker):
+    """
+    Worker with dynamic inputs to test with.
+    """
+
+    def process(self, channel, basic_deliver, properties, body, output):
+        output.info(str(body['dynamic']['item']))
+        output.info(str(body))
+        self.ack(basic_deliver)
+
+
 class TestWorker(TestCase):
 
     def tearDown(self):
@@ -100,11 +111,37 @@ class TestWorker(TestCase):
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
         self.assertRaises(NotImplementedError, w.process, **PROCESS_KWARGS)
 
-        # An implemented process should not raise an exception
+        # An implemented process should not raise NotImplementedError
         w = DummyWorker(MQ_CONF, 'dummyqueue', '/tmp/logs/')
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
         assert w.process(**PROCESS_KWARGS) is None  # No return
+
+    def test__process_with_dynamic_input(self):
+        """
+        Verify process with dynamic inputs work as expected.
+        """
+        # An implemented process with proper inputs should not
+        # raise NotImplementedError
+        w = DynamicDummyWorker(MQ_CONF, 'dummyqueue', '/tmp/logs/')
+        w._on_open(mock.MagicMock('connection'))
+        w._on_channel_open(mock.MagicMock(pika.channel.Channel))
+        w.notify = mock.MagicMock('notify')
+        w.send = mock.MagicMock('send')
+        assert w._process(**_PROCESS_KWARGS) is None  # No return
+        assert w.notify.call_count == 1
+        w.send.assert_called_once_with(
+            'release.step',
+            '1',
+            {'status': 'failed'})
+
+        # If the correct dynamic items are passed it should be a success
+        w.send.reset_mock()
+        w.notify.reset_mock()
+        pa = _PROCESS_KWARGS
+        pa['body'] = '{"dynamic": {"item": "test"}}'
+        assert w._process(**pa) is None  # No return
+        assert w.notify.call_count == 0
 
     def test__process(self):
         """
