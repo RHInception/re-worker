@@ -151,36 +151,27 @@ class Worker(object):
         """
         Internal processing that happens before subclass starts processing.
         """
-        me = self.__class__.__name__.lower()
-        topic = basic_deliver.routing_key.split('.')
-        if topic[1] != me:
+        try:
+            body = json.loads(body)
+            corr_id = str(properties.correlation_id)
+            # Create an output logger for sending results
+            output = logging.getLogger(corr_id)
+            output.setLevel(logging.DEBUG)
+            handler = logging.FileHandler(os.path.sep.join([
+                self._output_dir, corr_id + ".log"]))
+            formatter = logging.Formatter('%(message)s')
+            handler.setFormatter(formatter)
+            handler.setLevel(logging.DEBUG)
+            output.addHandler(handler)
+            # Execute
+            output.debug('Starting %s.%s' % (self.__class__.__name__, corr_id))
+            self.process(channel, basic_deliver, properties, body, output)
+            output.debug('Finished %s.%s' % (self.__class__.__name__, corr_id))
+        except ValueError, vex:
+            self.app_logger.error('Could not parse msg. Rejecting. %s: %s' % (
+                type(vex), vex))
             self._channel.basic_reject(
-                basic_deliver.delivery_tag,
-                requeue=True)
-            self.app_logger.warn("I am %s, so I rejected: %s" % \
-                (me, basic_deliver.routing_key))
-        else:
-            try:
-                body = json.loads(body)
-                corr_id = str(properties.correlation_id)
-                # Create an output logger for sending results
-                output = logging.getLogger(corr_id)
-                output.setLevel(logging.DEBUG)
-                handler = logging.FileHandler(os.path.sep.join([
-                    self._output_dir, corr_id + ".log"]))
-                formatter = logging.Formatter('%(message)s')
-                handler.setFormatter(formatter)
-                handler.setLevel(logging.DEBUG)
-                output.addHandler(handler)
-                # Execute
-                output.debug('Starting %s.%s' % (self.__class__.__name__, corr_id))
-                self.process(channel, basic_deliver, properties, body, output)
-                output.debug('Finished %s.%s' % (self.__class__.__name__, corr_id))
-            except ValueError, vex:
-                self.app_logger.error('Could not parse msg. Rejecting. %s: %s' % (
-                    type(vex), vex))
-                self._channel.basic_reject(
-                    basic_deliver.delivery_tag, requeue=False)
+                basic_deliver.delivery_tag, requeue=False)
 
     def process(self, channel, basic_deliver, properties, body, output):
         """
