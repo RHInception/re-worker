@@ -19,6 +19,9 @@ class MyWorker(Worker):
     ...
 ```
 
+If a **config_file** is passed in on Worker creation it will be loaded as JSON and available as self.\_config. Otherwise self.\_config will be an empty dictionary.
+
+
 Worker also provides a few convenience methods to simplify use:
 
 ### Worker.send
@@ -73,6 +76,7 @@ To run an instance you will need to make an instance of your worker by passing i
 * **Inputs**:
   * mq\_config: should house: user, password, server, port and vhost.
   * queue: is the name of the queue to use
+  * config\_file: is an optional full path to a json config file
   * output\_dir: is the directory for process logs to be written to
   * logger: is an optional logger. Defaults to a logger to stderr
 
@@ -98,7 +102,7 @@ mq_conf = {
     'password': 'guest',
 }
 
-worker = IPrintStuff(mq_conf, 'myqueue', '/tmp/logs/')
+worker = IPrintStuff(mq_conf, 'myqueue', output_dir='/tmp/logs/')
 worker.run_forever()
 ```
 

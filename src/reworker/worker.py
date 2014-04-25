@@ -32,12 +32,15 @@ class Worker(object):
     #: All inputs which should be passed in via body['dynamic'][ITEM]
     dynamic = ()
 
-    def __init__(self, mq_config, queue, output_dir='.', logger=None):
+    def __init__(
+            self, mq_config, queue, config_file=None,
+            output_dir='.', logger=None):
         """
         Creates an instance of a Worker.
 
         mq_config should house: user, password, server, port and vhost.
         queue is the name of the queue to use
+        config_file is an optional full path to a json config file
         output_dir is the directory for process logs to be written to
         logger is an optional logger. Defaults to a logger to stderr
         """
@@ -56,6 +59,12 @@ class Worker(object):
             self.app_logger.warn(
                 'No app logger passed in. '
                 'Defaulting to Streamandler with level INFO.')
+
+        self._config = {}
+        if config_file:
+            with open(os.path.realpath(os.path.expanduser(
+                    config_file)), 'r') as f_obj:
+                self._config = json.load(f_obj)
 
         self._output_dir = os.path.realpath(output_dir)
 
