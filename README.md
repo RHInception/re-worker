@@ -8,6 +8,17 @@ This library provides a simple base for release engine workers to build from.
 ## Implementing
 To implement a worker subclass off of **reworker.worker.Worker** and override the **process** method.
 
+If there are any inputs that need to be passed in the class level variable dynamic should be populated.
+
+```python
+
+class MyWorker(Worker):
+
+    dynamic = ('environment', 'cart')
+
+    ...
+```
+
 Worker also provides a few convenience methods to simplify use:
 
 ### Worker.send

@@ -29,6 +29,9 @@ class Worker(object):
     Parent class for workers.
     """
 
+    #: All inputs which should be passed in via body['dynamic'][ITEM]
+    dynamic = ()
+
     def __init__(self, mq_config, queue, output_dir='.', logger=None):
         """
         Creates an instance of a Worker.
@@ -171,13 +174,14 @@ class Worker(object):
             except KeyError, ke:
                 output.debug(
                     'An expected key in the message for %s for %s was '
-                    'missing: %s' % (corr_id, class_name, ke))
+                    'missing: %s. Required keys: %s' % (
+                        corr_id, class_name, ke, ",".join(self.dynamic)))
                 self.send('release.step', corr_id, {'status': 'failed'})
                 # Notify on result. Not required but nice to do.
                 self.notify(
                     '%s Failed' % class_name,
-                    '%s failed due to missing key: %s.' % (
-                        class_name, ke),
+                    '%s failed due to missing key: %s. Required Keys: %s' % (
+                        class_name, ke, ",".join(self.dynamic)),
                     'failed',
                     corr_id)
             output.debug('Finished %s.%s' % (self.__class__.__name__, corr_id))
