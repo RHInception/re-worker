@@ -88,5 +88,5 @@ if __name__ == '__main__':
         'user': 'guest',
         'password': 'guest',
     }
-    worker = ShellExec(mq_conf, 'worker queue', '/tmp/logs/')
+    worker = ShellExec(mq_conf, '/tmp/logs/')
     worker.run_forever()

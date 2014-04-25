@@ -32,14 +32,11 @@ class Worker(object):
     #: All inputs which should be passed in via body['dynamic'][ITEM]
     dynamic = ()
 
-    def __init__(
-            self, mq_config, queue, config_file=None,
-            output_dir='.', logger=None):
+    def __init__(self, mq_config, config_file=None, output_dir='.', logger=None):
         """
         Creates an instance of a Worker.
 
         mq_config should house: user, password, server, port and vhost.
-        queue is the name of the queue to use
         config_file is an optional full path to a json config file
         output_dir is the directory for process logs to be written to
         logger is an optional logger. Defaults to a logger to stderr
@@ -68,7 +65,7 @@ class Worker(object):
 
         self._output_dir = os.path.realpath(output_dir)
 
-        self._queue = queue
+        self._queue = "worker.%s" % self.__class__.__name__.lower()
         self._consumer_tag = None
 
         creds = pika.PlainCredentials(mq_config['user'], mq_config['password'])
@@ -143,7 +140,7 @@ class Worker(object):
         exchange is the exchange to publish on. Default: re
         """
         props = pika.spec.BasicProperties()
-        props.app_id = str(self.__class__.__name__)
+        props.app_id = str(self.__class__.__name__.lower())
         props.correlation_id = str(corr_id)
 
         self._channel.basic_publish(
