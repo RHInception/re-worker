@@ -225,7 +225,7 @@ class Worker(object):
                 'run_forver: %s' % aex)
         except KeyboardInterrupt:
             self.app_logger.info('KeyboardInterrupt sent.')
-        except pika.exceptions.IncompatibleProtocolError, ipex:
+        except pika.exceptions.IncompatibleProtocolError:
             self.app_logger.fatal('No connection or incompatible protocol.')
 
         self.app_logger.debug('Stopping the IOloop.')
