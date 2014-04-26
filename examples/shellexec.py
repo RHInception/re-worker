@@ -38,7 +38,7 @@ class ShellExec(Worker):
         self.ack(basic_deliver)
         corr_id = str(properties.correlation_id)
         # Notify we are starting
-        self.send('release.step', corr_id, {'status': 'started'})
+        self.send(properties.reply_to, corr_id, {'status': 'started'}, exchange='')
 
         # Start the ls
         command = ['/bin/ls', '-la']
@@ -58,7 +58,7 @@ class ShellExec(Worker):
 
         # Notify the final state based on the return code
         if process.returncode == 0:
-            self.send('release.step', corr_id, {'status': 'completed'})
+            self.send(properties.reply_to, corr_id, {'status': 'completed'}, exchange='')
             # Notify on result. Not required but nice to do.
             self.notify(
                 'ShellExec Executed Successfully',
@@ -68,7 +68,7 @@ class ShellExec(Worker):
                 corr_id)
 
         else:
-            self.send('release.step', corr_id, {'status': 'failed'})
+            self.send(properties.reply_to, corr_id, {'status': 'failed'}, exchange='')
             # Notify on result. Not required but nice to do.
             self.notify(
                 'ShellExec Failed',
