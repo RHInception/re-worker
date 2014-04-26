@@ -8,7 +8,7 @@ This library provides a simple base for release engine workers to build from.
 ## Implementing
 To implement a worker subclass off of **reworker.worker.Worker** and override the **process** method.
 
-If there are any inputs that need to be passed in the class level variable dynamic should be populated.
+If there are any inputs that need to be passed in the class level variable **dynamic** should be populated.
 
 ```python
 
@@ -31,6 +31,7 @@ Sends a message.
  * topic: the routing key
  * corr\_id: the correlation id
  * message\_struct: the dict or list to send as the body
+ * exchange: set to **''** to reply back to the FSM
 * **Returns**: None
 
 ### Worker.notify
@@ -75,7 +76,6 @@ To run an instance you will need to make an instance of your worker by passing i
 
 * **Inputs**:
   * mq\_config: should house: user, password, server, port and vhost.
-  * queue: is the name of the queue to use
   * config\_file: is an optional full path to a json config file
   * output\_dir: is the directory for process logs to be written to
   * logger: is an optional logger. Defaults to a logger to stderr
@@ -102,7 +102,7 @@ mq_conf = {
     'password': 'guest',
 }
 
-worker = IPrintStuff(mq_conf, 'myqueue', output_dir='/tmp/logs/')
+worker = IPrintStuff(mq_conf, output_dir='/tmp/logs/')
 worker.run_forever()
 ```
 

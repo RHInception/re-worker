@@ -32,7 +32,8 @@ class Worker(object):
     #: All inputs which should be passed in via body['dynamic'][ITEM]
     dynamic = ()
 
-    def __init__(self, mq_config, config_file=None, output_dir='.', logger=None):
+    def __init__(self, mq_config, config_file=None,
+                 output_dir='.', logger=None):
         """
         Creates an instance of a Worker.
 

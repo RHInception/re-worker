@@ -88,9 +88,9 @@ class TestWorker(TestCase):
         """
         Test creation of a worker acts as expected.
         """
-        w = worker.Worker(MQ_CONF, 'aqueue', output_dir='/tmp/logs/')
+        w = worker.Worker(MQ_CONF, output_dir='/tmp/logs/')
         assert w._output_dir == '/tmp/logs'
-        assert w._queue == 'aqueue'
+        assert w._queue == 'worker.worker'
         assert w._consumer_tag is None
         assert w._config == {}
         assert worker.pika.SelectConnection.call_count == 1
@@ -102,7 +102,7 @@ class TestWorker(TestCase):
         assert w._channel is not None
 
         w = worker.Worker(
-            MQ_CONF, 'aqueue', 'test/config.json', output_dir='/tmp/logs/')
+            MQ_CONF, config_file='test/config.json', output_dir='/tmp/logs/')
         assert w._config['a'] == 'test'
 
     def test_process(self):
@@ -110,13 +110,13 @@ class TestWorker(TestCase):
         Verify process works as expected.
         """
         # A default use should raise NotImplementedError
-        w = worker.Worker(MQ_CONF, 'aqueue', output_dir='/tmp/logs/')
+        w = worker.Worker(MQ_CONF, output_dir='/tmp/logs/')
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
         self.assertRaises(NotImplementedError, w.process, **PROCESS_KWARGS)
 
         # An implemented process should not raise NotImplementedError
-        w = DummyWorker(MQ_CONF, 'dummyqueue', output_dir='/tmp/logs/')
+        w = DummyWorker(MQ_CONF, output_dir='/tmp/logs/')
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
         assert w.process(**PROCESS_KWARGS) is None  # No return
@@ -127,7 +127,7 @@ class TestWorker(TestCase):
         """
         # An implemented process with proper inputs should not
         # raise NotImplementedError
-        w = DynamicDummyWorker(MQ_CONF, 'dummyqueue', output_dir='/tmp/logs/')
+        w = DynamicDummyWorker(MQ_CONF, output_dir='/tmp/logs/')
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
         w.notify = mock.MagicMock('notify')
@@ -152,13 +152,13 @@ class TestWorker(TestCase):
         Make sure the internal _process modifies inputs properly.
         """
         # A default use should raise NotImplementedError due to w.process
-        w = worker.Worker(MQ_CONF, 'aqueue', output_dir='/tmp/logs/')
+        w = worker.Worker(MQ_CONF, output_dir='/tmp/logs/')
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
         self.assertRaises(NotImplementedError, w._process, **_PROCESS_KWARGS)
 
         # An implemented process should not raise an exception with w._process
-        w = DummyWorker(MQ_CONF, 'dummyqueue', output_dir='/tmp/logs/')
+        w = DummyWorker(MQ_CONF, output_dir='/tmp/logs/')
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
         assert w._process(**_PROCESS_KWARGS) is None  # No return
@@ -168,7 +168,7 @@ class TestWorker(TestCase):
         Verify run_forever kicks off the ioloop.
         """
         # Use the dummy worker to test
-        w = DummyWorker(MQ_CONF, 'dummyqueue', output_dir='/tmp/logs/')
+        w = DummyWorker(MQ_CONF, output_dir='/tmp/logs/')
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
 
@@ -184,7 +184,7 @@ class TestWorker(TestCase):
         """
         Make sure that send executes the proper lower level calls.
         """
-        w = DummyWorker(MQ_CONF, 'dummyqueue', output_dir='/tmp/logs/')
+        w = DummyWorker(MQ_CONF, output_dir='/tmp/logs/')
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
 
@@ -200,14 +200,14 @@ class TestWorker(TestCase):
         assert kwargs['routing_key'] == topic
         assert kwargs['body'] == json.dumps(message)
 
-        assert kwargs['properties'].app_id == "DummyWorker"
+        assert kwargs['properties'].app_id == "DummyWorker".lower()
         assert kwargs['properties'].correlation_id == corr_id
 
     def test_notify(self):
         """
         Make sure that send executes the proper lower level calls.
         """
-        w = DummyWorker(MQ_CONF, 'dummyqueue', output_dir='/tmp/logs/')
+        w = DummyWorker(MQ_CONF, output_dir='/tmp/logs/')
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
 
@@ -228,5 +228,5 @@ class TestWorker(TestCase):
         assert kwargs['body'] == json.dumps({
             'slug': slug, 'message': message, 'phase': phase})
 
-        assert kwargs['properties'].app_id == "DummyWorker"
+        assert kwargs['properties'].app_id == "DummyWorker".lower()
         assert kwargs['properties'].correlation_id == corr_id
