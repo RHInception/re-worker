@@ -18,6 +18,7 @@ Url: https://github.com/rhinception/re-worker
 
 BuildArch: noarch
 BuildRequires: python2-devel
+BuildRequires: python-pip
 # BuildRequires: python-nose
 # %{?el6:BuildRequires: python-unittest2}
 
