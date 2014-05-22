@@ -66,7 +66,15 @@ class Worker(object):
 
         self._output_dir = os.path.realpath(output_dir)
 
-        self._queue = "worker.%s" % self.__class__.__name__.lower()
+        if self._config.get('queue', None):
+            # This worker is setting a custom queue name. Probably to
+            # differentiate from other workers with similar names.
+            _queue_suffix = self._suffix
+        else:
+            # No special naming requested. Leave the instance suffix alone
+            _queue_suffix = self.__class__.__name__.lower()
+
+        self._queue = "worker.%s" % _queue_suffix
         self._consumer_tag = None
 
         creds = pika.PlainCredentials(mq_config['user'], mq_config['password'])
