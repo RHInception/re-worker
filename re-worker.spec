@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -18,7 +18,7 @@ Url: https://github.com/rhinception/re-worker
 
 BuildArch: noarch
 BuildRequires: python2-devel
-# BuildRequires: python-pip
+BuildRequires: python-setuptools
 # BuildRequires: python-nose
 # %{?el6:BuildRequires: python-unittest2}
 
@@ -47,6 +47,9 @@ passed in the class level variable dynamic should be populated.
 %doc README.md LICENSE AUTHORS
 
 %changelog
+* Thu May 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-2
+- Don't forget about python-setuptools
+
 * Thu May 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-1
 - Workers can define their own custom queue suffix if desired
 
