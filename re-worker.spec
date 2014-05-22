@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -47,6 +47,9 @@ passed in the class level variable dynamic should be populated.
 %doc README.md LICENSE AUTHORS
 
 %changelog
+* Thu May 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-3
+- Fix incorrect assignment
+
 * Thu May 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-2
 - Don't forget about python-setuptools
 

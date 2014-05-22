@@ -69,7 +69,7 @@ class Worker(object):
         if self._config.get('queue', None):
             # This worker is setting a custom queue name. Probably to
             # differentiate from other workers with similar names.
-            _queue_suffix = self._suffix
+            _queue_suffix = self._config.get('queue')
         else:
             # No special naming requested. Leave the instance suffix alone
             _queue_suffix = self.__class__.__name__.lower()
