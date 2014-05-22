@@ -8,7 +8,7 @@
 
 Name: re-worker
 Summary: Reference base for re-worker plugins
-Version: 0.0.1
+Version: 0.0.2
 Release: 1%{?dist}
 
 Group: Applications/System
@@ -47,5 +47,8 @@ passed in the class level variable dynamic should be populated.
 %doc README.md LICENSE AUTHORS
 
 %changelog
+* Thu May 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-1
+- Workers can define their own custom queue suffix if desired
+
 * Sun May 11 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.1-1
 - First release

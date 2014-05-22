@@ -28,7 +28,7 @@ reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
     name='reworker',
-    version='0.0.1',
+    version='0.0.2',
     author='See AUTHORS',
     url='https://github.com/RHInception/re-worker',
     license='AGPLv3',
