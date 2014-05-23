@@ -19,17 +19,14 @@ Build script.
 
 import os.path
 
-#from pip.req import parse_requirements
 from setuptools import setup, find_packages
+
 
 def parse_requirements(path):
     with open(path, 'r') as install_reqs:
         return install_reqs.read().splitlines()
 
 reqs = parse_requirements('requirements.txt')
-
-# install_reqs = parse_requirements('requirements.txt')
-# reqs = [str(ir.req) for ir in install_reqs]
 
 
 setup(
