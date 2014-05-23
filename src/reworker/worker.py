@@ -244,3 +244,50 @@ class Worker(object):
         except AttributeError, aex:
             self.app_logger.debug('Connection could not be closed: %s' % aex)
         self.app_logger.info('Exiting...')
+
+
+def runner(WorkerCls):
+    """
+    Helper function for running a worker.
+
+    WorkerCls is the Worker Class to run.
+    """
+    import os.path
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument(
+        'mq_config',
+        metavar='MQ_CONFIG',
+        type=str,
+        nargs=1,
+        help='The Message Queue configuration file.')
+
+    parser.add_argument(
+        '-w', '--worker-config',
+        type=str,
+        required=False,
+        help='Optional full path to worker specific configuration file.',
+        default=None)
+
+    parser.add_argument(
+        '-o', '--output-dir',
+        type=str,
+        required=False,
+        help='Full path to the directory where output will be stored.',
+        default=os.path.realpath('.'))
+
+    args = parser.parse_args()
+    try:
+        mq_conf = json.load(open(args.mq_config[0], 'r'))
+        worker = WorkerCls(
+            mq_conf,
+            config_file=args.worker_config,
+            output_dir=args.output_dir)
+        worker.run_forever()
+    except KeyboardInterrupt:
+        pass
+    except Exception, ex:
+        print "Error: %s %s" % (type(ex), ex)
+        print "exiting..."
+        raise SystemExit(1)
