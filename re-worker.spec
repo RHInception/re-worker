@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.2
-Release: 3%{?dist}
+Release: 4%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -30,9 +30,6 @@ To implement a worker subclass off of reworker.worker.Worker and
 override the process method. If there are any inputs that need to be
 passed in the class level variable dynamic should be populated.
 
-# %check
-# nosetests -v
-
 %prep
 %setup -q -n %{_pkg_name}-%{version}
 
@@ -47,6 +44,9 @@ passed in the class level variable dynamic should be populated.
 %doc README.md LICENSE AUTHORS
 
 %changelog
+* Thu Jun  5 2014 Steve Milner <stevem@gnulinux.net> - 0.0.2-4
+- Removed check to make rpmlint happy.
+
 * Thu May 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-3
 - Fix incorrect assignment
 
