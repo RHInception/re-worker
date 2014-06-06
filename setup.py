@@ -19,8 +19,12 @@ Build script.
 
 import os.path
 
-from setuptools import setup, find_packages
-
+try:
+        from setuptools import setup, find_packages
+except ImportError:
+        import warnings
+            warnings.warn('No setuptools. Script creation will be skipped.')
+                from distutils.core import setup
 
 def parse_requirements(path):
     with open(path, 'r') as install_reqs:
