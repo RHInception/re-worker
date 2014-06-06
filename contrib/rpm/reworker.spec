@@ -6,7 +6,7 @@
 
 Name:           reworker
 Version:        0.0.2
-Release:        1-2%{?dist}
+Release:        2%{?dist}
 Summary:        Common worker framework for Release Engine
 
 License:        AGPLv3+
