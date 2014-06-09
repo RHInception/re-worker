@@ -4,50 +4,61 @@
 %{!?python2_sitearch: %global python2_sitearch %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
 %endif
 
-Name:           reworker
-Version:        0.0.2
-Release:        3%{?dist}
-Summary:        Common worker framework for Release Engine
+%global _pkg_name reworker
 
-License:        AGPLv3+
-URL:            https://github.com/RHInception/re-worker
-Source0:        reworker-%{version}.tar.gz
+Name: re-worker
+Summary: Reference base for re-worker plugins
+Version: 0.0.2
+Release: 5%{?dist}
 
-BuildArch:      noarch
-BuildRequires:  python-devel
-BuildRequires:  python-setuptools
-Requires:       python-pika>=0.9.12
-Requires:  python-setuptools
+Group: Applications/System
+License: AGPLv3
+Source0: %{_pkg_name}-%{version}.tar.gz
+Url: https://github.com/rhinception/re-worker
 
+BuildArch: noarch
+BuildRequires: python2-devel
+BuildRequires: python-setuptools
+Requires: python-setuptools
+# BuildRequires: python-nose
+# %{?el6:BuildRequires: python-unittest2}
 
 %description
-Common worker framework for Release Engine
+This library provides a simple base for release engine workers to
+build from.
 
+To implement a worker subclass off of reworker.worker.Worker and
+override the process method. If there are any inputs that need to be
+passed in the class level variable dynamic should be populated.
 
 %prep
-%setup -q
-
+%setup -q -n %{_pkg_name}-%{version}
 
 %build
-%{__python} setup.py build
-
+%{__python2} setup.py build
 
 %install
-rm -rf $RPM_BUILD_ROOT
-%{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT
+%{__python2} setup.py install -O1 --root=$RPM_BUILD_ROOT --record=re-worker-files.txt
 
-
-%files
+%files -f re-worker-files.txt
+%dir %{python2_sitelib}/%{_pkg_name}
 %doc README.md LICENSE AUTHORS
-%{python_sitelib}/*
-
 
 %changelog
-* Mon Jun  9 2014 Ryan Cook <rcook@redhat.com>- 0.0.1-3
-- Requires python-setuptools 
+* Mon Jun  9 2014 Ryan Cook <rcook@redhat.com> - 0.0.2-5
+- Updated for python-setuptools requirement
 
-* Tue Apr  9 2014 Ryan Cook <rcook@redhat.com>- 0.0.1-2
-- Updated to remove python-pip and include python-setuptools
+* Thu Jun  5 2014 Steve Milner <stevem@gnulinux.net> - 0.0.2-4
+- Removed check to make rpmlint happy.
 
-* Tue Apr  9 2014 Steve Milner <stevem@gnulinux.net>- 0.0.1-1
-- Initial spec
+* Thu May 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-3
+- Fix incorrect assignment
+
+* Thu May 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-2
+- Don't forget about python-setuptools
+
+* Thu May 22 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-1
+- Workers can define their own custom queue suffix if desired
+
+* Sun May 11 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.1-1
+- First release
