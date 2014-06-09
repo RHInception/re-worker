@@ -6,7 +6,7 @@
 
 Name:           reworker
 Version:        0.0.2
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Common worker framework for Release Engine
 
 License:        AGPLv3+
@@ -17,6 +17,7 @@ BuildArch:      noarch
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
 Requires:       python-pika>=0.9.12
+Requires:  python-setuptools
 
 
 %description
@@ -42,6 +43,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Jun  9 2014 Ryan Cook <rcook@redhat.com>- 0.0.1-3
+- Requires python-setuptools 
+
 * Tue Apr  9 2014 Ryan Cook <rcook@redhat.com>- 0.0.1-2
 - Updated to remove python-pip and include python-setuptools
 
