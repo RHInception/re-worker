@@ -28,7 +28,7 @@ MANPAGES := docs/man/man1/re-worker.1
 NAME := re-worker
 SHORTNAME := reworker
 
-RPMSPECDIR := .
+RPMSPECDIR := contrib/rpm/
 RPMSPEC := $(RPMSPECDIR)/$(NAME).spec
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
