@@ -224,14 +224,18 @@ class TestWorker(TestCase):
         corr_id = '12345'
         exchange = 're'
         message = {'test': 'item'}
+        target = ['target']
 
-        w.notify(slug, message, phase, corr_id, exchange)
+        w.notify(slug, message, phase, target, corr_id, exchange)
         assert w._channel.basic_publish.call_count == 1
         kwargs = w._channel.basic_publish.call_args[1]
         assert kwargs['exchange'] == exchange
         assert kwargs['routing_key'] == 'notification'
         assert kwargs['body'] == json.dumps({
-            'slug': slug, 'message': message, 'phase': phase})
+            'slug': slug,
+            'message': message,
+            'phase': phase,
+            'target': target})
 
         assert kwargs['properties'].app_id == "DummyWorker".lower()
         assert kwargs['properties'].correlation_id == corr_id

@@ -119,13 +119,14 @@ class Worker(object):
         """
         self._channel.basic_ack(basic_deliver.delivery_tag)
 
-    def notify(self, slug, message, phase, corr_id=None, exchange='re'):
+    def notify(self, slug, message, phase, target, corr_id=None, exchange='re'):
         """
         Shortcut for sending a notification.
 
         slug is the short text to use in the notification
         message is a string which will be used in the notification
         phase is the phase to identify with in the notification
+        target is the target to send the notification to
         corr_id is the correlation id. Default: None
         exchange is the exchange to publish on. Default: re
         """
@@ -136,6 +137,7 @@ class Worker(object):
                 'slug': str(slug)[:80],
                 'message': message,
                 'phase': phase,
+                'target': target,
             }
         )
 
