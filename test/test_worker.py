@@ -44,7 +44,11 @@ _PROCESS_KWARGS = {
     'channel': mock.MagicMock(pika.channel.Channel),
     'basic_deliver': mock.MagicMock(),
     'properties': mock.MagicMock(pika.spec.BasicProperties, correlation_id=1),
-    'body': '{}',
+    'body': json.dumps({
+        'notify': {},
+        'group': 'test',
+        'parameters': {},
+        'dynamic': {}}),
 }
 
 PROCESS_KWARGS = {
@@ -52,7 +56,6 @@ PROCESS_KWARGS = {
 }
 
 PROCESS_KWARGS.update(_PROCESS_KWARGS)
-PROCESS_KWARGS['body'] = {}
 
 
 class DummyWorker(worker.Worker):
@@ -143,7 +146,9 @@ class TestWorker(TestCase):
         w.send.reset_mock()
         w.notify.reset_mock()
         pa = _PROCESS_KWARGS
-        pa['body'] = '{"dynamic": {"item": "test"}}'
+        body_tmp = json.loads(pa['body'])
+        body_tmp['dynamic'] = {"item": "test"}
+        pa['body'] = json.dumps(body_tmp)
         assert w._process(**pa) is None  # No return
         assert w.notify.call_count == 0
 
