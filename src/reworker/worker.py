@@ -119,7 +119,8 @@ class Worker(object):
         """
         self._channel.basic_ack(basic_deliver.delivery_tag)
 
-    def notify(self, slug, message, phase, target, corr_id=None, exchange='re'):
+    def notify(
+            self, slug, message, phase, target, corr_id=None, exchange='re'):
         """
         Shortcut for sending a notification.
 
