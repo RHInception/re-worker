@@ -23,6 +23,8 @@ import os.path
 import pika
 import pika.exceptions
 
+from reworker.output import Output
+
 
 class Worker(object):
     """
@@ -33,14 +35,14 @@ class Worker(object):
     dynamic = ()
 
     def __init__(self, mq_config, config_file=None,
-                 output_dir='.', logger=None):
+                 logger=None, **kwargs):
         """
         Creates an instance of a Worker.
 
         mq_config should house: user, password, server, port and vhost.
         config_file is an optional full path to a json config file
-        output_dir is the directory for process logs to be written to
         logger is an optional logger. Defaults to a logger to stderr
+        **kwargs is all other keyword arguments
         """
         # NOTE: self.app_logger is the application level logger.
         #       This should not be used for user notification!
@@ -58,13 +60,16 @@ class Worker(object):
                 'No app logger passed in. '
                 'Defaulting to Streamandler with level INFO.')
 
+        if kwargs:
+            for key in kwargs.keys():
+                self.app_logger.warn('Unknown key %s passed to %s.' % (
+                    key, self.__class__.__name__))
+
         self._config = {}
         if config_file:
             with open(os.path.realpath(os.path.expanduser(
                     config_file)), 'r') as f_obj:
                 self._config = json.load(f_obj)
-
-        self._output_dir = os.path.realpath(output_dir)
 
         if self._config.get('queue', None):
             # This worker is setting a custom queue name. Probably to
@@ -177,14 +182,8 @@ class Worker(object):
             body = json.loads(body)
             corr_id = str(properties.correlation_id)
             # Create an output logger for sending results
-            output = logging.getLogger(corr_id)
-            output.setLevel(logging.DEBUG)
-            handler = logging.FileHandler(os.path.sep.join([
-                self._output_dir, corr_id + ".log"]))
-            formatter = logging.Formatter('%(message)s')
-            handler.setFormatter(formatter)
-            handler.setLevel(logging.DEBUG)
-            output.addHandler(handler)
+            output = Output(self.send, corr_id)
+            output.setLevel('DEBUG')
             # Execute
             output.debug('Starting %s.%s' % (class_name, corr_id))
             try:
@@ -273,20 +272,12 @@ def runner(WorkerCls):
         help='Optional full path to worker specific configuration file.',
         default=None)
 
-    parser.add_argument(
-        '-o', '--output-dir',
-        type=str,
-        required=False,
-        help='Full path to the directory where output will be stored.',
-        default=os.path.realpath('.'))
-
     args = parser.parse_args()
     try:
         mq_conf = json.load(open(args.mq_config[0], 'r'))
         worker = WorkerCls(
             mq_conf,
-            config_file=args.worker_config,
-            output_dir=args.output_dir)
+            config_file=args.worker_config)
         worker.run_forever()
     except KeyboardInterrupt:
         pass

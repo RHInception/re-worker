@@ -52,20 +52,18 @@ class TestWorker(TestCase):
 
             dummy.assert_called_once_with(
                 json.load(open('examples/mqconf.json', 'r')),
-                config_file=None,
-                output_dir=os.path.realpath('.'))
+                config_file=None)
 
             assert dummy().run_forever.call_count == 1
 
             # With output dir
             dummy.reset_mock()
-            sys.argv = ['', 'examples/mqconf.json', '-o', '/tmp/']
+            sys.argv = ['', 'examples/mqconf.json']
             worker.runner(dummy)
 
             dummy.assert_called_once_with(
                 json.load(open('examples/mqconf.json', 'r')),
-                config_file=None,
-                output_dir='/tmp/')
+                config_file=None)
 
             assert dummy().run_forever.call_count == 1
 
@@ -77,7 +75,6 @@ class TestWorker(TestCase):
 
             dummy.assert_called_once_with(
                 json.load(open('examples/mqconf.json', 'r')),
-                config_file='examples/mqconf.json',
-                output_dir=os.path.realpath('.'))
+                config_file='examples/mqconf.json')
 
             assert dummy().run_forever.call_count == 1

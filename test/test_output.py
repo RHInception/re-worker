@@ -26,6 +26,7 @@ from . import TestCase, unittest
 
 CORR_ID = 123456
 
+
 def send(topic, corr_id, body):
     pass
 
@@ -69,11 +70,13 @@ class TestOutput(TestCase):
         o = output.Output(self.send_meth, CORR_ID, 'DEBUG')
         o.log('INFO', 'testing')
         self.send_meth.call_count == 1
-        self.send_meth.assert_called_with('output', CORR_ID, {'message': 'testing'})
+        self.send_meth.assert_called_with(
+            'output', CORR_ID, {'message': 'testing'})
 
         o.log('WARN', 'test')
         self.send_meth.call_count == 2
-        self.send_meth.assert_called_with('output', CORR_ID, {'message': 'test'})
+        self.send_meth.assert_called_with(
+            'output', CORR_ID, {'message': 'test'})
 
     def test_log_with_mixed_level(self):
         """
@@ -86,8 +89,9 @@ class TestOutput(TestCase):
 
         o.log('INFO', 'test')
         self.send_meth.call_count == 1
-        self.send_meth.assert_called_with('output', CORR_ID, {'message': 'test'})
- 
+        self.send_meth.assert_called_with(
+            'output', CORR_ID, {'message': 'test'})
+
     def test_log_with_lower_level(self):
         """
         If the level is under the threshold no data should go to the bus.
@@ -97,4 +101,3 @@ class TestOutput(TestCase):
         o.log('WARN', 'testing')
         o.log('ERROR', 'testing')
         self.send_meth.call_count == 0
-
