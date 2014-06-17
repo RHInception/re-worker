@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.2
-Release: 5%{?dist}
+Release: 6%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -39,12 +39,18 @@ passed in the class level variable dynamic should be populated.
 
 %install
 %{__python2} setup.py install -O1 --root=$RPM_BUILD_ROOT --record=re-worker-files.txt
+mkdir -p $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/
+touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 
 %files -f re-worker-files.txt
 %dir %{python2_sitelib}/%{_pkg_name}
 %doc README.md LICENSE AUTHORS
+%{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Tue Jun 17 2014 Ryan Cook <rcook@redhat.com> - 0.0.2-6
+- Created the __init__.py to resolve issue when installing re-worker-sleep and re-worker-juicer
+
 * Mon Jun  9 2014 Ryan Cook <rcook@redhat.com> - 0.0.2-5
 - Updated for python-setuptools requirement
 
