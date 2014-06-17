@@ -1,6 +1,7 @@
 *.py[cod]
 tox/
 rpm-build/
+re-workerenv
 
 # C extensions
 *.so
