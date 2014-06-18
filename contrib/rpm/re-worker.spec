@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.2
-Release: 6%{?dist}
+Release: 7%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -43,11 +43,15 @@ mkdir -p $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/
 touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 
 %files -f re-worker-files.txt
+%defattr(-, root, root)
 %dir %{python2_sitelib}/%{_pkg_name}
 %doc README.md LICENSE AUTHORS
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Wed Jun 18 2014 Steve Milner <stevem@gnulinux.net> - 0.0.2-7
+- Defattr not being used in files section.
+
 * Tue Jun 17 2014 Ryan Cook <rcook@redhat.com> - 0.0.2-6
 - Created the __init__.py to resolve issue when installing re-worker-sleep and re-worker-juicer
 
