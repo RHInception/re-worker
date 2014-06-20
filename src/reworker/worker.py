@@ -183,7 +183,7 @@ class Worker(object):
             corr_id = str(properties.correlation_id)
             # Create an output logger for sending results
             output = Output(self.send, corr_id)
-            output.setLevel('DEBUG')
+            output.setLevel(self._config.get('OUTPUT_LEVEL', 'DEBUG'))
             # Execute
             output.debug('Starting %s.%s' % (class_name, corr_id))
             try:
