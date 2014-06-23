@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.2
-Release: 8%{?dist}
+Release: 9%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -49,6 +49,9 @@ touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Mon Jun 23 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.2-9
+- Add timestamps to Starting/Finished messages
+
 * Fri Jun 20 2014 Steve Milner <stevem@gnulinux.net> - 0.0.2-8
 - Added ability to change output level.
 

@@ -19,7 +19,7 @@ The worker class.
 import json
 import logging
 import os.path
-
+import datetime
 import pika
 import pika.exceptions
 
@@ -185,14 +185,22 @@ class Worker(object):
             output = Output(self.send, corr_id)
             output.setLevel(self._config.get('OUTPUT_LEVEL', 'DEBUG'))
             # Execute
-            output.debug('Starting %s.%s' % (class_name, corr_id))
+            output.debug('Starting %s.%s - %s' % (
+                class_name,
+                corr_id,
+                str(datetime.datetime.now())
+            ))
             try:
                 self.process(channel, basic_deliver, properties, body, output)
             except KeyError, ke:
                 output.debug(
                     'An expected key in the message for %s for %s was '
-                    'missing: %s. Required keys: %s' % (
-                        corr_id, class_name, ke, ",".join(self.dynamic)))
+                    'missing: %s. Required keys: %s - %s' % (
+                        corr_id,
+                        class_name,
+                        ke,
+                        ",".join(self.dynamic),
+                        str(datetime.datetime.now())))
                 self.send('release.step', corr_id, {'status': 'failed'})
                 # Notify on result. Not required but nice to do.
                 self.notify(
@@ -201,7 +209,10 @@ class Worker(object):
                         class_name, ke, ",".join(self.dynamic)),
                     'failed',
                     corr_id)
-            output.debug('Finished %s.%s' % (self.__class__.__name__, corr_id))
+            output.debug('Finished %s.%s - %s\n\n' % (
+                class_name,
+                corr_id,
+                str(datetime.datetime.now())))
         except ValueError, vex:
             self.app_logger.error('Could not parse msg. Rejecting. %s: %s' % (
                 type(vex), vex))
