@@ -163,7 +163,8 @@ class Worker(object):
             self.app_logger.debug(
                 'No notifications to send for phase %s' % phase)
 
-    def send(self, topic, corr_id, message_struct, exchange='re'):
+    def send(self, topic, corr_id, message_struct,
+             exchange='re', reply_to='log'):
         """
         Shortcut for sending messages back.
 
@@ -175,6 +176,7 @@ class Worker(object):
         props = pika.spec.BasicProperties()
         props.app_id = str(self.__class__.__name__.lower())
         props.correlation_id = str(corr_id)
+        props.reply_to = reply_to
 
         self._channel.basic_publish(
             exchange=exchange,
