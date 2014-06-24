@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.4
-Release: 3%{?dist}
+Release: 4%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -20,6 +20,7 @@ BuildArch: noarch
 BuildRequires: python2-devel
 BuildRequires: python-setuptools
 Requires: python-setuptools
+Requires: python-argparse
 # BuildRequires: python-nose
 # %{?el6:BuildRequires: python-unittest2}
 
@@ -49,6 +50,9 @@ touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Tue Jun 24 2014 Ryan Cook <rcook@redhat.com> - 0.0.4-4
+- Added dependency python-argparse for workers
+
 * Tue Jun 24 2014 Steve Milner <stevem@gnulinux.net> - 0.0.4-3
 - Start notifications now can happen.
 
