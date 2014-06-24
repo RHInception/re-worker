@@ -26,6 +26,7 @@ except ImportError:
     warnings.warn('No setuptools. Script creation will be skipped.')
     from distutils.core import setup
 
+
 def parse_requirements(path):
     with open(path, 'r') as install_reqs:
         return install_reqs.read().splitlines()
@@ -35,7 +36,7 @@ reqs = parse_requirements('requirements.txt')
 
 setup(
     name='reworker',
-    version='0.0.2',
+    version='0.0.3',
     author='See AUTHORS',
     url='https://github.com/RHInception/re-worker',
     license='AGPLv3',

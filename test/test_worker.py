@@ -45,7 +45,11 @@ _PROCESS_KWARGS = {
     'basic_deliver': mock.MagicMock(),
     'properties': mock.MagicMock(pika.spec.BasicProperties, correlation_id=1),
     'body': json.dumps({
-        'notify': {},
+        'notify': {
+            'started': {
+                'irc': ['#release-engine'],
+            }
+        },
         'group': 'test',
         'parameters': {},
         'dynamic': {}}),
@@ -65,6 +69,7 @@ class DummyWorker(worker.Worker):
 
     def process(self, channel, basic_deliver, properties, body, output):
         output.info(str(body))
+        self.notify('slug', 'the message', 'started', corr_id=1)
         self.ack(basic_deliver)
 
 
@@ -76,6 +81,7 @@ class DynamicDummyWorker(worker.Worker):
     def process(self, channel, basic_deliver, properties, body, output):
         output.info(str(body['dynamic']['item']))
         output.info(str(body))
+        self.notify('no', 'should not fire', 'completed', corr_id=1)
         self.ack(basic_deliver)
 
 
@@ -171,7 +177,6 @@ class TestWorker(TestCase):
             body_tmp['dynamic'] = {"item": "test"}
             pa['body'] = json.dumps(body_tmp)
             assert w._process(**pa) is None  # No return
-            assert w.notify.call_count == 0
 
     def test__process(self):
         """
@@ -237,26 +242,20 @@ class TestWorker(TestCase):
         w._on_open(mock.MagicMock('connection'))
         w._on_channel_open(mock.MagicMock(pika.channel.Channel))
 
-        slug = 'slug'
-        message = 'message'
-        phase = 'create'
+        w._process(**_PROCESS_KWARGS)
 
-        topic = 'topic'
-        corr_id = '12345'
-        exchange = 're'
-        message = {'test': 'item'}
-        target = ['target']
+        assert w._channel.basic_publish.call_count == 4
+        assert 'Sent notification to' in w.app_logger.info.call_args[0][0]
 
-        w.notify(slug, message, phase, target, corr_id, exchange)
-        assert w._channel.basic_publish.call_count == 1
-        kwargs = w._channel.basic_publish.call_args[1]
-        assert kwargs['exchange'] == exchange
-        assert kwargs['routing_key'] == 'notification'
-        assert kwargs['body'] == json.dumps({
-            'slug': slug,
-            'message': message,
-            'phase': phase,
-            'target': target})
+    def test_notify_dev_nulls(self):
+        """
+        Make sure that notify dev null's things that should not be sent.
+        """
+        w = DynamicDummyWorker(MQ_CONF)
+        w._on_open(mock.MagicMock('connection'))
+        w._on_channel_open(mock.MagicMock(pika.channel.Channel))
 
-        assert kwargs['properties'].app_id == "DummyWorker".lower()
-        assert kwargs['properties'].correlation_id == corr_id
+        w._process(**_PROCESS_KWARGS)
+
+        assert w._channel.basic_publish.call_count == 4
+        assert 'No notifications to send' in w.app_logger.debug.call_args[0][0]

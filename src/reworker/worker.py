@@ -66,6 +66,7 @@ class Worker(object):
                     key, self.__class__.__name__))
 
         self._config = {}
+        self.__notify_cfg = {}
         if config_file:
             with open(os.path.realpath(os.path.expanduser(
                     config_file)), 'r') as f_obj:
@@ -125,27 +126,42 @@ class Worker(object):
         self._channel.basic_ack(basic_deliver.delivery_tag)
 
     def notify(
-            self, slug, message, phase, target, corr_id=None, exchange='re'):
+            self, slug, message, phase, target=None,
+            corr_id=None, exchange='re'):
         """
         Shortcut for sending a notification.
 
         slug is the short text to use in the notification
         message is a string which will be used in the notification
         phase is the phase to identify with in the notification
-        target is the target to send the notification to
+        *target is deprecated*!
         corr_id is the correlation id. Default: None
         exchange is the exchange to publish on. Default: re
         """
-        self.send(
-            'notification',
-            corr_id,
-            {
-                'slug': str(slug)[:80],
-                'message': message,
-                'phase': phase,
-                'target': target,
-            }
-        )
+        this_phase = self.__notify_cfg.get(phase, {})
+        if target:
+            self.app_logger.warn(
+                'notify should no longer be passed a target. Ignoring...')
+
+        if this_phase:
+            for topic_suffix in this_phase.keys():
+                notify_topic = 'notify.%s' % topic_suffix
+                target = this_phase[topic_suffix]
+                self.send(
+                    notify_topic,
+                    corr_id,
+                    {
+                        'slug': str(slug)[:80],
+                        'message': message,
+                        'phase': phase,
+                        'target': target,
+                    }
+                )
+                self.app_logger.info('Sent notification to %s for phase %s' % (
+                    notify_topic, phase))
+        else:
+            self.app_logger.debug(
+                'No notifications to send for phase %s' % phase)
 
     def send(self, topic, corr_id, message_struct, exchange='re'):
         """
@@ -181,6 +197,8 @@ class Worker(object):
         try:
             body = json.loads(body)
             corr_id = str(properties.correlation_id)
+            # Hold the notification confing for this execution
+            self.__notify_cfg = body.get('notify', {})
             # Create an output logger for sending results
             output = Output(self.send, corr_id)
             output.setLevel(self._config.get('OUTPUT_LEVEL', 'DEBUG'))
@@ -208,7 +226,7 @@ class Worker(object):
                     '%s failed due to missing key: %s. Required Keys: %s' % (
                         class_name, ke, ",".join(self.dynamic)),
                     'failed',
-                    corr_id)
+                    corr_id=corr_id)
             output.debug('Finished %s.%s - %s\n\n' % (
                 class_name,
                 corr_id,
@@ -222,8 +240,10 @@ class Worker(object):
                 '%s Failed' % class_name,
                 '%s failed trying to parse message' % class_name,
                 'failed',
-                corr_id)
+                corr_id=corr_id)
             self.reject(basic_deliver, False)
+        # Force empty __notify_cfg
+        self.__notify_cfg = {}
 
     def process(self, channel, basic_deliver, properties, body, output):
         """
