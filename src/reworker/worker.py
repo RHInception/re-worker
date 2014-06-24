@@ -201,6 +201,11 @@ class Worker(object):
             corr_id = str(properties.correlation_id)
             # Hold the notification confing for this execution
             self.__notify_cfg = body.get('notify', {})
+            self.notify(
+                'Starting %s for id %s' % (class_name, corr_id),
+                'Starting %s for id %s' % (class_name, corr_id),
+                'started',
+                corr_id)
             # Create an output logger for sending results
             output = Output(self.send, corr_id)
             output.setLevel(self._config.get('OUTPUT_LEVEL', 'DEBUG'))
@@ -212,6 +217,11 @@ class Worker(object):
             ))
             try:
                 self.process(channel, basic_deliver, properties, body, output)
+                self.notify(
+                    'Completed %s for id %s' % (class_name, corr_id),
+                    'Completed %s for id %s' % (class_name, corr_id),
+                    'completed',
+                    corr_id)
             except KeyError, ke:
                 output.debug(
                     'An expected key in the message for %s for %s was '
