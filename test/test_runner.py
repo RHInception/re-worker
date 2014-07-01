@@ -44,7 +44,7 @@ class TestWorker(TestCase):
         The runner function should honor inputs.
         """
         with nested(
-                mock.patch('reworker.worker.pika'),
+                mock.patch('reworker.worker.Connection'),
                 mock.patch('reworker.worker.logging')):
             sys.argv = ['', 'examples/mqconf.json']
             dummy = mock.Mock(worker.Worker)

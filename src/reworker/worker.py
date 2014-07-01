@@ -20,13 +20,25 @@ import json
 import logging
 import os.path
 import datetime
-import pika
-import pika.exceptions
+
+import kombu.exceptions
+
+from kombu import Connection, Queue, Producer
+from kombu.mixins import ConsumerMixin
 
 from reworker.output import Output
 
 
-class Worker(object):
+class PropertiesWrapper(dict):  # pragma nocover
+    """
+    Wrapper to make dictionaries dot accessible to ease pika migration.
+    """
+
+    def __getattribute__(self, name):
+        return dict.__getitem__(self, name)
+
+
+class Worker(ConsumerMixin):
     """
     Parent class for workers.
     """
@@ -44,6 +56,7 @@ class Worker(object):
         logger is an optional logger. Defaults to a logger to stderr
         **kwargs is all other keyword arguments
         """
+
         # NOTE: self.app_logger is the application level logger.
         #       This should not be used for user notification!
         self.app_logger = logger
@@ -80,50 +93,35 @@ class Worker(object):
             # No special naming requested. Leave the instance suffix alone
             _queue_suffix = self.__class__.__name__.lower()
 
-        self._queue = "worker.%s" % _queue_suffix
-        self._consumer_tag = None
+        self._queue = Queue(
+            "worker.%s" % _queue_suffix,
+            None,
+            "worker.%s" % _queue_suffix)
 
-        creds = pika.PlainCredentials(mq_config['user'], mq_config['password'])
-
-        # TODO: add ssl=True
-        params = pika.ConnectionParameters(
+        con_str = 'amqp://%s:%s@%s:%s/%s' % (
+            mq_config['user'],
+            mq_config['password'],
             mq_config['server'],
             mq_config['port'],
-            mq_config['vhost'],
-            creds
+            mq_config['vhost']
         )
+
         self.app_logger.info(
             'Attemtping connection with amqp://%s:***@%s:%s%s' % (
                 mq_config['user'], mq_config['server'],
                 mq_config['port'], mq_config['vhost']))
 
-        self._connection = pika.SelectConnection(
-            parameters=params,
-            on_open_callback=self._on_open)
+        self.connection = Connection(con_str)
+        self.producer = Producer(self.connection, serializer='json')
 
-    def _on_open(self, connection):
-        """
-        Call back when a connection is opened.
-        """
-        self.app_logger.debug('Attemtping to open channel...')
-        self._connection.channel(self._on_channel_open)
+    def get_consumers(self, Consumer, channel):
+        return [Consumer(queues=[self._queue], callbacks=[self._process])]
 
-    def _on_channel_open(self, channel):
-        """
-        Call back when a channel is opened.
-        """
-        self.app_logger.info('Connection and channel open.')
-        self._channel = channel
-        self.app_logger.debug('Attempting to start consuming...')
-        self._consumer_tag = self._channel.basic_consume(
-            self._process, queue=self._queue)
-        self.app_logger.info('Consuming on queue %s' % self._queue)
-
-    def ack(self, basic_deliver):
+    def ack(self, message):
         """
         Shortcut for acking
         """
-        self._channel.basic_ack(basic_deliver.delivery_tag)
+        message.ack()
 
     def notify(
             self, slug, message, phase, corr_id=None,
@@ -173,32 +171,31 @@ class Worker(object):
         message_struct is a dictionary or list which will become json and sent
         exchange is the exchange to publish on. Default: re
         """
-        props = pika.spec.BasicProperties()
-        props.app_id = str(self.__class__.__name__.lower())
-        props.correlation_id = str(corr_id)
-        props.reply_to = reply_to
-
-        self._channel.basic_publish(
+        self.producer.publish(
+            json.dumps(message_struct),
             exchange=exchange,
             routing_key=topic,
-            body=json.dumps(message_struct),
-            properties=props)
+            content_type='application/json',
+            auto_declare=False,
+            # Properties
+            app_id=str(self.__class__.__name__.lower()),
+            correlation_id=str(corr_id),
+            reply_to=reply_to
+        )
 
-    def reject(self, basic_deliver, requeue=False):
+    def reject(self, message, requeue=False):
         """
-        Reject the message with the given `basic_deliver`
+        Reject the message with the given message.
         """
-        self._channel.basic_reject(basic_deliver.delivery_tag,
-                                   requeue=requeue)
+        message.reject(requeue=requeue)
 
-    def _process(self, channel, basic_deliver, properties, body):
+    def _process(self, body, message):
         """
         Internal processing that happens before subclass starts processing.
         """
         class_name = self.__class__.__name__
         try:
-            body = json.loads(body)
-            corr_id = str(properties.correlation_id)
+            corr_id = str(message.properties['correlation_id'])
             # Hold the notification confing for this execution
             self.__notify_cfg = body.get('notify', {})
             self.notify(
@@ -215,8 +212,17 @@ class Worker(object):
                 corr_id,
                 str(datetime.datetime.now())
             ))
+
+            # NOTE: This is done to ease off pika
+            properties = PropertiesWrapper(message.properties)
+
             try:
-                self.process(channel, basic_deliver, properties, body, output)
+                self.process(
+                    message.channel,
+                    message,
+                    properties,
+                    body,
+                    output)
                 self.notify(
                     'Completed %s for id %s' % (class_name, corr_id),
                     'Completed %s for id %s' % (class_name, corr_id),
@@ -270,22 +276,21 @@ class Worker(object):
         Run forever ... or until someone makes it stop.
         """
         try:
-            self.app_logger.debug('Starting the IOLoop.')
-            self._connection.ioloop.start()
+            self.app_logger.debug('Starting the loop.')
+            self.run()
         except AttributeError, aex:
             self.app_logger.fatal(
                 'Can not recover from AttributeError raised during '
                 'run_forver: %s' % aex)
+            raise aex
         except KeyboardInterrupt:
             self.app_logger.info('KeyboardInterrupt sent.')
-        except pika.exceptions.IncompatibleProtocolError:
+        except kombu.exceptions.VersionMismatch:
             self.app_logger.fatal('No connection or incompatible protocol.')
 
-        self.app_logger.debug('Stopping the IOloop.')
-        self._connection.ioloop.stop()
         self.app_logger.debug('Closing the connection.')
         try:
-            self._connection.close()
+            self.connection.release()
         except AttributeError, aex:
             self.app_logger.debug('Connection could not be closed: %s' % aex)
         self.app_logger.info('Exiting...')

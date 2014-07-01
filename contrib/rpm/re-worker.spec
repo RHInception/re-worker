@@ -8,8 +8,8 @@
 
 Name: re-worker
 Summary: Reference base for re-worker plugins
-Version: 0.0.4
-Release: 4%{?dist}
+Version: 0.0.5
+Release: 1%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -21,6 +21,7 @@ BuildRequires: python2-devel
 BuildRequires: python-setuptools
 Requires: python-setuptools
 Requires: python-argparse
+Requires: python-kombu
 # BuildRequires: python-nose
 # %{?el6:BuildRequires: python-unittest2}
 
@@ -50,6 +51,9 @@ touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Tue Jul  1 2014 Steve Milner <stevem@gnulinux.net> - 0.0.5-1
+- Now using kombu instead of pika.
+
 * Tue Jun 24 2014 Ryan Cook <rcook@redhat.com> - 0.0.4-4
 - Added dependency python-argparse for workers
 
