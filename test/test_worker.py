@@ -43,7 +43,9 @@ MQ_CONF = {
 _PROCESS_KWARGS = {
     'channel': mock.MagicMock(pika.channel.Channel),
     'basic_deliver': mock.MagicMock(),
-    'properties': mock.MagicMock(pika.spec.BasicProperties, correlation_id=1),
+    'properties': mock.MagicMock(pika.spec.BasicProperties,
+                                 correlation_id=1,
+                                 reply_to='amq.gen-test'),
     'body': json.dumps({
         'notify': {
             'started': {
@@ -163,11 +165,12 @@ class TestWorker(TestCase):
             w.notify = mock.MagicMock('notify')
             w.send = mock.MagicMock('send')
             assert w._process(**_PROCESS_KWARGS) is None  # No return
-            assert w.notify.call_count == 2
+            self.assertEqual(w.notify.call_count, 0)
             w.send.assert_called_with(
-                'release.step',
+                'amq.gen-test',
                 '1',
-                {'status': 'failed'})
+                {'status': 'failed',
+                 'data': "DynamicDummyWorker failed due to missing key: 'item'. Required Keys: "})
 
             # If the correct dynamic items are passed it should be a success
             w.send.reset_mock()
@@ -244,7 +247,7 @@ class TestWorker(TestCase):
 
         w._process(**_PROCESS_KWARGS)
 
-        assert w._channel.basic_publish.call_count == 5
+        self.assertEqual(w._channel.basic_publish.call_count, 4)
         assert 'Sent notification to' in w.app_logger.info.call_args[0][0]
 
     def test_notify_dev_nulls(self):
@@ -257,5 +260,4 @@ class TestWorker(TestCase):
 
         w._process(**_PROCESS_KWARGS)
 
-        assert w._channel.basic_publish.call_count == 5
-        assert 'No notifications to send' in w.app_logger.debug.call_args[0][0]
+        self.assertEqual(w._channel.basic_publish.call_count, 4)

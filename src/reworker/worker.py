@@ -199,13 +199,7 @@ class Worker(object):
         try:
             body = json.loads(body)
             corr_id = str(properties.correlation_id)
-            # Hold the notification confing for this execution
             self.__notify_cfg = body.get('notify', {})
-            self.notify(
-                'Starting %s for id %s' % (class_name, corr_id),
-                'Starting %s for id %s' % (class_name, corr_id),
-                'started',
-                corr_id)
             # Create an output logger for sending results
             output = Output(self.send, corr_id)
             output.setLevel(self._config.get('OUTPUT_LEVEL', 'DEBUG'))
@@ -217,11 +211,6 @@ class Worker(object):
             ))
             try:
                 self.process(channel, basic_deliver, properties, body, output)
-                self.notify(
-                    'Completed %s for id %s' % (class_name, corr_id),
-                    'Completed %s for id %s' % (class_name, corr_id),
-                    'completed',
-                    corr_id)
             except KeyError, ke:
                 output.debug(
                     'An expected key in the message for %s for %s was '
@@ -231,14 +220,13 @@ class Worker(object):
                         ke,
                         ",".join(self.dynamic),
                         str(datetime.datetime.now())))
-                self.send('release.step', corr_id, {'status': 'failed'})
-                # Notify on result. Not required but nice to do.
-                self.notify(
-                    '%s Failed' % class_name,
-                    '%s failed due to missing key: %s. Required Keys: %s' % (
-                        class_name, ke, ",".join(self.dynamic)),
-                    'failed',
-                    corr_id=corr_id)
+                _data_msg = '%s failed due to missing key: %s. Required Keys: %s' % (
+                    class_name, ke, ",".join(self.dynamic))
+                self.send(properties.reply_to, corr_id, {
+                    'status': 'failed',
+                    'data': _data_msg
+                })
+
             output.debug('Finished %s.%s - %s\n\n' % (
                 class_name,
                 corr_id,
@@ -246,16 +234,12 @@ class Worker(object):
         except ValueError, vex:
             self.app_logger.error('Could not parse msg. Rejecting. %s: %s' % (
                 type(vex), vex))
-            self.send('release.step', corr_id, {'status': 'failed'})
-            # Notify on result. Not required but nice to do.
-            self.notify(
-                '%s Failed' % class_name,
-                '%s failed trying to parse message' % class_name,
-                'failed',
-                corr_id=corr_id)
+            self.send(properties.reply_to, corr_id, {
+                'status': 'failed',
+                'data': '%s failed trying to parse message' % class_name
+            })
+
             self.reject(basic_deliver, False)
-        # Force empty __notify_cfg
-        self.__notify_cfg = {}
 
     def process(self, channel, basic_deliver, properties, body, output):
         """
