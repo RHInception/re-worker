@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.4
-Release: 4%{?dist}
+Release: 5%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -50,6 +50,9 @@ touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Thu Sep  4 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.4-5
+- Relocate initial phase notification logic into the FSM
+
 * Tue Jun 24 2014 Ryan Cook <rcook@redhat.com> - 0.0.4-4
 - Added dependency python-argparse for workers
 
