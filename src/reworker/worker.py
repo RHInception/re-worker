@@ -155,7 +155,8 @@ class Worker(object):
                         'message': message,
                         'phase': phase,
                         'target': target,
-                    }
+                    },
+                    exchange=''
                 )
                 self.app_logger.info('Sent notification to %s for phase %s' % (
                     notify_topic, phase))
@@ -222,10 +223,12 @@ class Worker(object):
                         str(datetime.datetime.now())))
                 _data_msg = '%s failed due to missing key: %s. Required Keys: %s' % (
                     class_name, ke, ",".join(self.dynamic))
-                self.send(properties.reply_to, corr_id, {
-                    'status': 'failed',
-                    'data': _data_msg
-                })
+                self.send(properties.reply_to,
+                          corr_id, {
+                              'status': 'failed',
+                              'data': _data_msg
+                          },
+                          exchange='')
 
             output.debug('Finished %s.%s - %s\n\n' % (
                 class_name,
@@ -237,7 +240,7 @@ class Worker(object):
             self.send(properties.reply_to, corr_id, {
                 'status': 'failed',
                 'data': '%s failed trying to parse message' % class_name
-            })
+            }, exchange='')
 
             self.reject(basic_deliver, False)
 

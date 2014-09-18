@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.4
-Release: 5%{?dist}
+Release: 6%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -50,6 +50,9 @@ touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Thu Sep 18 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.4-6
+- re-worker should send to a blank exchange for FSM responses
+
 * Thu Sep  4 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.4-5
 - Relocate initial phase notification logic into the FSM
 
