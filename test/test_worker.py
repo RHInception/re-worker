@@ -170,7 +170,8 @@ class TestWorker(TestCase):
                 'amq.gen-test',
                 '1',
                 {'status': 'failed',
-                 'data': "DynamicDummyWorker failed due to missing key: 'item'. Required Keys: "})
+                 'data': "DynamicDummyWorker failed due to missing key: 'item'. Required Keys: "},
+                exchange='')
 
             # If the correct dynamic items are passed it should be a success
             w.send.reset_mock()
