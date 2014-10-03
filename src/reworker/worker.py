@@ -16,10 +16,12 @@
 The worker class.
 """
 
+import datetime
 import json
 import logging
 import os.path
-import datetime
+import time
+
 import pika
 import pika.exceptions
 
@@ -60,6 +62,14 @@ class Worker(object):
                 'No app logger passed in. '
                 'Defaulting to Streamandler with level INFO.')
 
+        # Forces pika.* logger to use the same handlers as app_logger
+        pika_channel_logger = logging.getLogger('pika')
+        pika_channel_logger.handlers = self.app_logger.handlers
+
+        # Closing should be True when we are meaning to close conenction
+        self._closing = False
+        self._connected = False
+
         if kwargs:
             for key in kwargs.keys():
                 self.app_logger.warn('Unknown key %s passed to %s.' % (
@@ -72,34 +82,47 @@ class Worker(object):
                     config_file)), 'r') as f_obj:
                 self._config = json.load(f_obj)
 
-        if self._config.get('queue', None):
-            # This worker is setting a custom queue name. Probably to
-            # differentiate from other workers with similar names.
-            _queue_suffix = self._config.get('queue')
-        else:
-            # No special naming requested. Leave the instance suffix alone
-            _queue_suffix = self.__class__.__name__.lower()
-
-        self._queue = "worker.%s" % _queue_suffix
-        self._consumer_tag = None
-
-        creds = pika.PlainCredentials(mq_config['user'], mq_config['password'])
-
         # TODO: add ssl=True
-        params = pika.ConnectionParameters(
+        creds = pika.PlainCredentials(mq_config['user'], mq_config['password'])
+        self._con_params = pika.ConnectionParameters(
             mq_config['server'],
             mq_config['port'],
             mq_config['vhost'],
             creds
         )
         self.app_logger.info(
-            'Attemtping connection with amqp://%s:***@%s:%s%s' % (
+            'Connection params set as amqp://%s:***@%s:%s%s' % (
                 mq_config['user'], mq_config['server'],
                 mq_config['port'], mq_config['vhost']))
 
-        self._connection = pika.SelectConnection(
-            parameters=params,
-            on_open_callback=self._on_open)
+        self._connect()
+
+    def _connect(self):
+        """
+        Used to connect or reconnect to the bus.
+        """
+        try:
+            if self._config.get('queue', None):
+                # This worker is setting a custom queue name. Probably to
+                # differentiate from other workers with similar names.
+                _queue_suffix = self._config.get('queue')
+            else:
+                # No special naming requested. Leave the instance suffix alone
+                _queue_suffix = self.__class__.__name__.lower()
+
+            self._queue = "worker.%s" % _queue_suffix
+            self._consumer_tag = None
+
+            self._connection = pika.SelectConnection(
+                parameters=self._con_params,
+                on_open_callback=self._on_open,
+                on_close_callback=self._on_close,
+                stop_ioloop_on_close=False)
+            self._connected = True
+        except pika.exceptions.AMQPConnectionError, ae:
+            # This means we couldn't connect, so act like a reconnect
+            self.app_logger.warn('Unable to make connection: %s' % ae.message)
+            self._on_close(None, -1, str(ae))
 
     def _on_open(self, connection):
         """
@@ -118,6 +141,35 @@ class Worker(object):
         self._consumer_tag = self._channel.basic_consume(
             self._process, queue=self._queue)
         self.app_logger.info('Consuming on queue %s' % self._queue)
+
+    def _on_close(self, connection, reply_code, reply_text):
+        """
+        Attempt to reconnect on close.
+        """
+        self.app_logger.debug('Connection closing.')
+        self._channel = None
+        self._connected = False
+        if getattr(self, '_connection', None):
+            self.app_logger.debug('Stopping the IOloop.')
+            self._connection.ioloop.stop()
+            self.app_logger.debug('Closing the connection.')
+
+        if self._closing:
+            try:
+                self._connection.close()
+            except AttributeError, aex:
+                self.app_logger.debug('Connection could not be closed: %s' % aex)
+            self.app_logger.info('Exiting...')
+            raise SystemExit(0)
+        else:
+            self.app_logger.warn('Connection closed becuase %s (%s)' % (
+                reply_text, reply_code))
+            self.app_logger.info('Attempting to reconnect in 5 seconds ...')
+            self._closing = False
+
+            # Since we stop the ioloop we can't use add_timeout
+            time.sleep(5)
+            self.run_forever()
 
     def ack(self, basic_deliver):
         """
@@ -257,25 +309,16 @@ class Worker(object):
         Run forever ... or until someone makes it stop.
         """
         try:
-            self.app_logger.debug('Starting the IOLoop.')
+            if self._connected is False:
+                self._connect()
+
+            self.app_logger.info('Starting the IOLoop.')
             self._connection.ioloop.start()
-        except AttributeError, aex:
-            self.app_logger.fatal(
-                'Can not recover from AttributeError raised during '
-                'run_forver: %s' % aex)
         except KeyboardInterrupt:
             self.app_logger.info('KeyboardInterrupt sent.')
+            self._closing = True
         except pika.exceptions.IncompatibleProtocolError:
             self.app_logger.fatal('No connection or incompatible protocol.')
-
-        self.app_logger.debug('Stopping the IOloop.')
-        self._connection.ioloop.stop()
-        self.app_logger.debug('Closing the connection.')
-        try:
-            self._connection.close()
-        except AttributeError, aex:
-            self.app_logger.debug('Connection could not be closed: %s' % aex)
-        self.app_logger.info('Exiting...')
 
 
 def runner(WorkerCls):

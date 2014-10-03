@@ -8,8 +8,8 @@
 
 Name: re-worker
 Summary: Reference base for re-worker plugins
-Version: 0.0.4
-Release: 6%{?dist}
+Version: 0.0.5
+Release: 1%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -50,6 +50,9 @@ touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Fri Oct 3 2014 Steve Milner <stevem@gnulinux.net> - 0.0.5-1
+- Workers should attempt to reconnect when disconnected.
+
 * Thu Sep 18 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.4-6
 - re-worker should send to a blank exchange for FSM responses
 

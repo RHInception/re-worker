@@ -210,9 +210,40 @@ class TestWorker(TestCase):
         w.run_forever()
         # It should start
         assert w._connection.ioloop.start.called == 1
-        # Since we mocked stuff it will fall into closing. Verify it closes
-        # with the proper calls
+
+    def test_run__on_close_recconects(self):
+        """
+        Verify _on_close attempt to recconect by default.
+        """
+        # Use the dummy worker to test
+        w = DummyWorker(MQ_CONF)
+        connection = mock.MagicMock('connection')
+        w._on_open(connection)
+        w._on_channel_open(mock.MagicMock(pika.channel.Channel))
+
+        w._on_close(connection, 1, 'Testing')
+
+        assert w._closing is False
         assert w._connection.ioloop.stop.called == 1
+        assert w._connection.close.called == 0
+        w._connection.add_timeout.called_once_with(5, w.run_forever)
+
+    def test_run__on_close_stops_when_asked(self):
+        """
+        Verify _on_close closes connection when it is asked to.
+        """
+        # Use the dummy worker to test
+        w = DummyWorker(MQ_CONF)
+        connection = mock.MagicMock('connection')
+        w._on_open(connection)
+        w._on_channel_open(mock.MagicMock(pika.channel.Channel))
+
+        # This is True noting that we are meaning to close the connection
+        w._closing = True
+
+        self.assertRaises(SystemExit, w._on_close, connection, 1, 'Testing')
+
+        assert w._connection.ioloop.start.called == 0
         assert w._connection.close.called == 1
 
     def test_send(self):
