@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -21,6 +21,7 @@ BuildRequires: python2-devel
 BuildRequires: python-setuptools
 Requires: python-setuptools
 Requires: python-argparse
+Requires: python-pika
 # BuildRequires: python-nose
 # %{?el6:BuildRequires: python-unittest2}
 
@@ -50,6 +51,9 @@ touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Fri Oct 10 2014 Steve Milner <stevem@gnulinux.net> - 0.0.5-2
+- python-pika is a requirement
+
 * Fri Oct 3 2014 Steve Milner <stevem@gnulinux.net> - 0.0.5-1
 - Workers should attempt to reconnect when disconnected.
 
