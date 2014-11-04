@@ -9,7 +9,7 @@
 Name: re-worker
 Summary: Reference base for re-worker plugins
 Version: 0.0.6
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -51,6 +51,9 @@ touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Tue Nov  4 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.6-2
+- Change SSL connect params to only use TLS
+
 * Tue Nov  4 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.6-1
 - Now with ability to connect to rabbitmq over SSL. Also automatic port
   selection and defaults.

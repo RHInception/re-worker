@@ -371,12 +371,12 @@ class TestWorker(TestCase):
 
         # port set to SSL port, ssl enabled
         (con_params, connect_string) = w._parse_connect_params(MQ_CONF_FULL_SSL)
-        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:5671/?ssl=t")
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:5671/?ssl=t&ssl_options={ssl_version=ssl.PROTOCOL_TLSv1}")
 
         # port not set, ssl enabled
         (con_params, connect_string) = w._parse_connect_params(MQ_CONF_DEFAULT_PORT_SSL)
-        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:5671/?ssl=t")
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:5671/?ssl=t&ssl_options={ssl_version=ssl.PROTOCOL_TLSv1}")
 
         # custom port set, ssl enabled
         (con_params, connect_string) = w._parse_connect_params(MQ_CONF_CUSTOM_PORT_SSL_ENABLED)
-        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:15672/?ssl=t")
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:15672/?ssl=t&ssl_options={ssl_version=ssl.PROTOCOL_TLSv1}")

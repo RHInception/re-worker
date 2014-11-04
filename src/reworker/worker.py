@@ -24,6 +24,7 @@ import time
 
 import pika
 import pika.exceptions
+import ssl
 
 from reworker.output import Output
 
@@ -109,13 +110,13 @@ use the supplied port.
         # SSL is set to 'True' in the config file
         if mq_config.get('ssl', False):
             _ssl = True
-            _ssl_qp = 't'
+            _ssl_qp = "?ssl=t&ssl_options={ssl_version=ssl.PROTOCOL_TLSv1}"
             # Use the provided port, or the default SSL port if no
             # port is supplied
             _port = mq_config.get('port', _ssl_port)
         else:
             _ssl = False
-            _ssl_qp = 'f'
+            _ssl_qp = '?ssl=f'
             # Use the provided port, or the default non-ssl connection
             # port if no port was supplied
             _port = mq_config.get('port', _non_ssl_port)
@@ -125,10 +126,11 @@ use the supplied port.
             port=_port,
             virtual_host=mq_config['vhost'],
             credentials=creds,
-            ssl=_ssl
+            ssl=_ssl,
+            ssl_options={'ssl_version': ssl.PROTOCOL_TLSv1}
         )
 
-        connection_string = 'Connection params set as amqp://%s:***@%s:%s%s?ssl=%s' % (
+        connection_string = 'Connection params set as amqp://%s:***@%s:%s%s%s' % (
             mq_config['user'], mq_config['server'],
             _port, mq_config['vhost'], _ssl_qp)
 
