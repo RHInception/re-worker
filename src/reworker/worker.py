@@ -82,22 +82,60 @@ class Worker(object):
                     config_file)), 'r') as f_obj:
                 self._config = json.load(f_obj)
 
-        # TODO: add ssl=True
-        creds = pika.PlainCredentials(mq_config['user'], mq_config['password'])
-        self._con_params = pika.ConnectionParameters(
-            mq_config['server'],
-            mq_config['port'],
-            mq_config['vhost'],
-            creds
-        )
-        self.app_logger.info(
-            'Connection params set as amqp://%s:***@%s:%s%s' % (
-                mq_config['user'], mq_config['server'],
-                mq_config['port'], mq_config['vhost']))
+        (con_params, connection_string) = self._parse_connect_params(mq_config)
+        self._con_params = con_params
 
+        self.app_logger.info(connection_string)
         self._connect()
 
+    def _parse_connect_params(self, mq_config):
+        """Parse the given dictionary ``mq_config``. Return connection params,
+and a properly formatted AMQP connection string with the password
+masked out.
+
+The default port for SSL/Non-SSL connections is selected automatically
+if port is not supplied. If a port is supplied then that port is used
+instead.
+
+SSL is false by default. Enabling SSL and setting a port manually will
+use the supplied port.
+
+        """
+        _ssl_port = 5671
+        _non_ssl_port = 5672
+
+        creds = pika.PlainCredentials(mq_config['user'], mq_config['password'])
+
+        # SSL is set to 'True' in the config file
+        if mq_config.get('ssl', False):
+            _ssl = True
+            _ssl_qp = 't'
+            # Use the provided port, or the default SSL port if no
+            # port is supplied
+            _port = mq_config.get('port', _ssl_port)
+        else:
+            _ssl = False
+            _ssl_qp = 'f'
+            # Use the provided port, or the default non-ssl connection
+            # port if no port was supplied
+            _port = mq_config.get('port', _non_ssl_port)
+
+        con_params = pika.ConnectionParameters(
+            host=mq_config['server'],
+            port=_port,
+            virtual_host=mq_config['vhost'],
+            credentials=creds,
+            ssl=_ssl
+        )
+
+        connection_string = 'Connection params set as amqp://%s:***@%s:%s%s?ssl=%s' % (
+            mq_config['user'], mq_config['server'],
+            _port, mq_config['vhost'], _ssl_qp)
+
+        return (con_params, connection_string)
+
     def _connect(self):
+
         """
         Used to connect or reconnect to the bus.
         """

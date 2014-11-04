@@ -39,6 +39,62 @@ MQ_CONF = {
     'password': 'guest',
 }
 
+# Config with custom port, no ssl
+MQ_CONF_CUSTOM_PORT = {
+    'server': '127.0.0.1',
+    'port': 15672,
+    'vhost': '/',
+    'user': 'guest',
+    'password': 'guest',
+}
+
+# Config for non-ssl connection, port unspecified
+MQ_CONF_NO_PORT_NO_SSL = {
+    'server': '127.0.0.1',
+    'vhost': '/',
+    'user': 'guest',
+    'password': 'guest',
+}
+
+# Config
+MQ_CONF_DEFAULT_PORT_NO_SSL = {
+    'server': '127.0.0.1',
+    'port': 5672,
+    'vhost': '/',
+    'user': 'guest',
+    'password': 'guest',
+    'ssl': False
+}
+
+# Set SSL AND the port
+MQ_CONF_FULL_SSL = {
+    'server': '127.0.0.1',
+    'port': 5671,
+    'vhost': '/',
+    'user': 'guest',
+    'password': 'guest',
+    'ssl': True
+}
+
+# Just set SSL, use the default port
+MQ_CONF_DEFAULT_PORT_SSL = {
+    'server': '127.0.0.1',
+    'vhost': '/',
+    'user': 'guest',
+    'password': 'guest',
+    'ssl': True
+}
+
+# Config with custom port, no ssl
+MQ_CONF_CUSTOM_PORT_SSL_ENABLED = {
+    'server': '127.0.0.1',
+    'port': 15672,
+    'vhost': '/',
+    'user': 'guest',
+    'password': 'guest',
+    'ssl': True
+}
+
 # Default inputs
 _PROCESS_KWARGS = {
     'channel': mock.MagicMock(pika.channel.Channel),
@@ -293,3 +349,34 @@ class TestWorker(TestCase):
         w._process(**_PROCESS_KWARGS)
 
         self.assertEqual(w._channel.basic_publish.call_count, 4)
+
+    def test___parse_connect_params(self):
+        w = DynamicDummyWorker(MQ_CONF)
+
+        # port set explicitly to the non-ssl port, ssl not enabled
+        (con_params, connect_string) = w._parse_connect_params(MQ_CONF)
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:5672/?ssl=f")
+
+        # port set explicitly to custom port, ssl unset
+        (con_params, connect_string) = w._parse_connect_params(MQ_CONF_CUSTOM_PORT)
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:15672/?ssl=f")
+
+        # port unset, ssl unset
+        (con_params, connect_string) = w._parse_connect_params(MQ_CONF_NO_PORT_NO_SSL)
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:5672/?ssl=f")
+
+        # port set to the default non-ssl port, ssl disabled
+        (con_params, connect_string) = w._parse_connect_params(MQ_CONF_DEFAULT_PORT_NO_SSL)
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:5672/?ssl=f")
+
+        # port set to SSL port, ssl enabled
+        (con_params, connect_string) = w._parse_connect_params(MQ_CONF_FULL_SSL)
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:5671/?ssl=t")
+
+        # port not set, ssl enabled
+        (con_params, connect_string) = w._parse_connect_params(MQ_CONF_DEFAULT_PORT_SSL)
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:5671/?ssl=t")
+
+        # custom port set, ssl enabled
+        (con_params, connect_string) = w._parse_connect_params(MQ_CONF_CUSTOM_PORT_SSL_ENABLED)
+        self.assertEqual(connect_string, "Connection params set as amqp://guest:***@127.0.0.1:15672/?ssl=t")
