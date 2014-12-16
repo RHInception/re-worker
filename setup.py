@@ -36,7 +36,7 @@ reqs = parse_requirements('requirements.txt')
 
 setup(
     name='reworker',
-    version='0.0.6',
+    version='0.0.7',
     author='See AUTHORS',
     url='https://github.com/RHInception/re-worker',
     license='AGPLv3',

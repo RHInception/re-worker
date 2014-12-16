@@ -8,8 +8,8 @@
 
 Name: re-worker
 Summary: Reference base for re-worker plugins
-Version: 0.0.6
-Release: 2%{?dist}
+Version: 0.0.7
+Release: 1%{?dist}
 
 Group: Applications/System
 License: AGPLv3
@@ -51,6 +51,9 @@ touch $RPM_BUILD_ROOT/%{python2_sitelib}/replugin/__init__.py
 %{python2_sitelib}/replugin/__init__.py*
 
 %changelog
+* Tue Dec 16 2014 Steve Milner <stevem@gnulinux.net> - 0.0.7-1
+- utils module created.
+
 * Tue Nov  4 2014 Tim Bielawa <tbielawa@redhat.com> - 0.0.6-2
 - Change SSL connect params to only use TLS
 
